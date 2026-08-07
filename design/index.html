@@ -1,0 +1,1794 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>NeckUp for Mac — 8-bit 街机风设计评审稿</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* ==== pacman design system tokens（原样复制自 tokens.css） ==== */
+      :root {
+        --bg: #050505;
+        --surface: #101014;
+        --surface-warm: #1f1b08;
+        --fg: #fff7d6;
+        --fg-2: #f6e79c;
+        --muted: #b9a85d;
+        --meta: #ffcc00;
+        --border: #2338ff;
+        --border-soft: #17218a;
+        --accent: #ffcc00;
+        --accent-on: #050505;
+        --accent-hover: color-mix(in oklab, var(--accent), black 8%);
+        --accent-active: color-mix(in oklab, var(--accent), black 14%);
+        --success: #00ff66;
+        --warn: #ff9900;
+        --danger: #ff3b3b;
+        --font-display: "Press Start 2P", "Arial Black", system-ui, sans-serif;
+        --font-body: "Inter", system-ui, sans-serif;
+        --font-mono: "Press Start 2P", ui-monospace, monospace;
+        --text-xs: 10px;
+        --text-sm: 12px;
+        --text-base: 14px;
+        --text-lg: 16px;
+        --text-xl: 20px;
+        --text-2xl: 30px;
+        --text-3xl: 44px;
+        --text-4xl: 64px;
+        --leading-body: 1.6;
+        --leading-tight: 1.08;
+        --tracking-display: 0;
+        --space-1: 4px;
+        --space-2: 8px;
+        --space-3: 12px;
+        --space-4: 16px;
+        --space-5: 20px;
+        --space-6: 24px;
+        --space-8: 32px;
+        --space-12: 48px;
+        --section-y-desktop: 84px;
+        --section-y-tablet: 60px;
+        --section-y-phone: 44px;
+        --radius-sm: 10px;
+        --radius-md: 18px;
+        --radius-lg: 9999px;
+        --radius-pill: 9999px;
+        --elev-flat: none;
+        --elev-ring: 0 0 0 1px var(--border);
+        --elev-raised: 0 0 0 2px #2338ff, 0 22px 60px rgba(0, 0, 0, 0.46);
+        --focus-ring: 0 0 0 4px rgba(255, 204, 0, 0.34);
+        --motion-fast: 90ms;
+        --motion-base: 160ms;
+        --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+        --container-max: 1080px;
+        --container-gutter-desktop: 32px;
+        --container-gutter-tablet: 24px;
+        --container-gutter-phone: 16px;
+      }
+      /* ==== NeckUp 局部扩展 token（像素画 / 岛专用色，也收敛在 :root） ==== */
+      :root {
+        --island-black: #000000;
+        --island-glass: rgba(16, 16, 20, 0.86);
+        --reminder-warm: #ffd873;
+        --reminder-warm-deep: #f5b93c;
+        --idle-gray: #8a8a92;
+        --macos-menu: rgba(28, 28, 34, 0.92);
+        --macos-notify: rgba(32, 32, 38, 0.94);
+        --px-shell: #2fae4e;
+        --px-shell-dark: #157a34;
+        --px-skin: #7ee081;
+        --px-mountain: #2e7d46;
+        --px-mountain-dark: #1d5230;
+        --px-bald: #8a6b3a;
+        --stage-dot: rgba(35, 56, 255, 0.16);
+        --screen-bg: #0a0a10;
+        /* 游戏化怪物专用像素色 */
+        --px-stone: #9aa3ad;
+        --px-jelly: #7fb2ff;
+        --px-bat: #b98cff;
+      }
+
+      *, *::before, *::after { box-sizing: border-box; }
+      html, body { margin: 0; padding: 0; }
+      body {
+        background: var(--bg);
+        color: var(--fg);
+        font-family: var(--font-body);
+        font-size: var(--text-base);
+        line-height: var(--leading-body);
+        -webkit-font-smoothing: antialiased;
+      }
+      /* 展示舞台：深色底 + 像素点阵网格 */
+      .stage {
+        min-height: 100vh;
+        background-image: radial-gradient(var(--stage-dot) 1px, transparent 1.5px);
+        background-size: 24px 24px;
+        padding-bottom: var(--section-y-desktop);
+      }
+      .container {
+        max-width: var(--container-max);
+        margin-inline: auto;
+        padding-inline: var(--container-gutter-desktop);
+      }
+      section { padding-block: var(--section-y-tablet) 0; }
+      h1, h2, h3, p { margin: 0; }
+      h1, h2, h3 {
+        font-family: var(--font-display);
+        line-height: 1.5;
+        letter-spacing: var(--tracking-display);
+      }
+      .eyebrow {
+        color: var(--meta);
+        font-family: var(--font-mono);
+        font-size: var(--text-xs);
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+      .sec-head { margin-bottom: var(--space-8); }
+      .sec-head h2 {
+        margin-top: var(--space-3);
+        font-size: var(--text-2xl);
+        font-weight: 700;
+      }
+      .sec-head h2 .en { color: var(--muted); font-size: var(--text-sm); margin-left: var(--space-3); }
+      .sec-head .sub { margin-top: var(--space-3); color: var(--fg-2); max-width: 640px; }
+
+      /* ---------- 头部 ---------- */
+      .hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: var(--space-8);
+        align-items: end;
+        padding-top: var(--section-y-tablet);
+      }
+      .wordmark {
+        font-family: var(--font-display);
+        font-size: var(--text-4xl);
+        color: var(--fg);
+        text-shadow: 6px 6px 0 var(--border-soft);
+        line-height: 1;
+      }
+      .wordmark .up { color: var(--meta); }
+      .tagline {
+        margin-top: var(--space-5);
+        font-size: var(--text-lg);
+        color: var(--fg-2);
+        max-width: 560px;
+      }
+      .tagline strong { color: var(--fg); }
+      .hero-badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-2);
+        margin-top: var(--space-6);
+      }
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-2);
+        padding: var(--space-2) var(--space-3);
+        border: 1px dashed var(--border);
+        border-radius: var(--radius-pill);
+        color: var(--muted);
+        font-size: var(--text-xs);
+      }
+      .mascot-block { text-align: center; }
+      .mascot-caption {
+        margin-top: var(--space-3);
+        color: var(--muted);
+        font-family: var(--font-mono);
+        font-size: var(--text-xs);
+      }
+      .px { image-rendering: pixelated; }
+      .px-host { position: relative; margin-inline: auto; }
+
+      /* ---------- MacBook 场景区 ---------- */
+      .scene-wrap { display: flex; justify-content: center; }
+      .macbook { width: 880px; max-width: 100%; }
+      .macbook .lid {
+        border: 3px solid #2a2a32;
+        border-bottom: 0;
+        border-radius: var(--radius-md) var(--radius-md) 0 0;
+        background: var(--screen-bg);
+        overflow: hidden;
+        position: relative;
+        height: 400px;
+      }
+      .macbook .base {
+        height: 14px;
+        border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+        background: linear-gradient(#3a3a44, #1c1c22);
+        position: relative;
+      }
+      .macbook .base::before {
+        content: "";
+        position: absolute;
+        left: 50%;
+        top: 0;
+        width: 120px;
+        height: 6px;
+        transform: translateX(-50%);
+        border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+        background: #101014;
+      }
+      /* 屏幕内菜单栏 */
+      .fake-menubar {
+        position: absolute;
+        inset: 0 0 auto 0;
+        height: 28px;
+        display: flex;
+        align-items: center;
+        gap: var(--space-4);
+        padding-inline: var(--space-4);
+        color: rgba(255, 247, 214, 0.85);
+        font-size: var(--text-xs);
+        z-index: 1;
+      }
+      .fake-menubar .right { margin-left: auto; display: flex; gap: var(--space-4); color: rgba(255, 247, 214, 0.6); }
+      /* 刘海 */
+      .notch {
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 200px;
+        height: 34px;
+        background: var(--island-black);
+        border-radius: 0 0 14px 14px;
+        z-index: 3;
+      }
+      /* 灵动岛：收缩态，贴着刘海向两侧延伸 */
+      .island {
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        height: 28px;
+        background: rgba(0, 0, 0, 0.82);
+        border-radius: 0 0 14px 14px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        z-index: 2;
+      }
+      .island .side {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        padding-inline: var(--space-3);
+      }
+      .island .gap { width: 200px; flex: none; } /* 刘海占位 */
+      /* 呼吸圆点 */
+      .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: var(--radius-pill);
+        background: var(--success);
+        animation: breathe 1.6s ease-in-out infinite alternate;
+      }
+      @keyframes breathe {
+        from { transform: scale(0.85); opacity: 0.75; }
+        to { transform: scale(1.3); opacity: 1; }
+      }
+      /* 屏幕内的桌面内容暗示（代码窗） */
+      .screen-content {
+        position: absolute;
+        inset: 60px var(--space-8) var(--space-8);
+        border: 1px solid var(--border-soft);
+        border-radius: var(--radius-sm);
+        padding: var(--space-4);
+        color: var(--muted);
+        font-family: ui-monospace, monospace;
+        font-size: var(--text-xs);
+        line-height: 1.9;
+        overflow: hidden;
+      }
+      .screen-content .ln { display: block; white-space: pre; }
+      .screen-content .c1 { color: var(--border); }
+      .screen-content .c2 { color: var(--success); }
+      .screen-content .c3 { color: var(--warn); }
+      .scene-caption {
+        margin-top: var(--space-6);
+        display: flex;
+        justify-content: center;
+        gap: var(--space-6);
+        color: var(--muted);
+        font-size: var(--text-sm);
+      }
+      .scene-caption b { color: var(--fg-2); font-weight: 600; }
+
+      /* ---------- 三态对照 ---------- */
+      .states-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: var(--space-5);
+      }
+      .state-card {
+        border: 1px solid var(--border-soft);
+        border-radius: var(--radius-md);
+        background: var(--surface);
+        overflow: hidden;
+      }
+      .state-canvas {
+        position: relative;
+        height: 190px;
+        background: var(--screen-bg);
+        border-bottom: 1px dashed var(--border-soft);
+        overflow: hidden;
+      }
+      .state-canvas.tall { height: 190px; }
+      .state-canvas .notch { width: 110px; height: 23px; border-radius: 0 0 9px 9px; }
+      .state-strip {
+        position: absolute;
+        inset: 0 0 auto 0;
+        height: 23px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-inline: var(--space-3);
+        font-size: 9px;
+        color: rgba(255, 247, 214, 0.35);
+        border-bottom: 1px dashed rgba(35, 56, 255, 0.25);
+        z-index: 1;
+      }
+      .mini-island {
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        height: 18px;
+        background: rgba(0, 0, 0, 0.85);
+        border-radius: 0 0 9px 9px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        z-index: 2;
+      }
+      .mini-island .gap { width: 110px; flex: none; }
+      .mini-island .side { display: flex; align-items: center; gap: 5px; padding-inline: var(--space-2); }
+      .mini-island .dot { width: 6px; height: 6px; }
+      .mini-island .t {
+        font-family: var(--font-mono);
+        font-size: 8px;
+        color: rgba(255, 247, 214, 0.92);
+      }
+      /* 展开态卡片 */
+      .expanded-card {
+        position: absolute;
+        top: 22px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 250px;
+        background: var(--island-glass);
+        border: 1px solid var(--border-soft);
+        border-radius: var(--radius-sm);
+        padding: var(--space-3);
+        z-index: 2;
+        backdrop-filter: blur(8px);
+      }
+      .expanded-card .row {
+        display: flex;
+        justify-content: space-between;
+        font-size: 10px;
+        color: var(--fg);
+        font-weight: 600;
+      }
+      .expanded-card .row .word { color: var(--success); }
+      .posture-track {
+        margin-top: var(--space-2);
+        height: 12px;
+        border-radius: var(--radius-pill);
+        background: rgba(255, 247, 214, 0.12);
+        position: relative;
+      }
+      .posture-track .ball {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 12px;
+        height: 12px;
+        margin: -6px 0 0 -6px;
+        border-radius: var(--radius-pill);
+        background: var(--success);
+      }
+      .expanded-card .track-hint {
+        margin-top: 4px;
+        font-size: 8px;
+        color: var(--muted);
+      }
+      .expanded-card .stats-line {
+        margin-top: var(--space-2);
+        font-size: 9px;
+        color: var(--muted);
+      }
+      .expanded-card .btns {
+        margin-top: var(--space-2);
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+      .btn-pixel {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        border: 1px solid transparent;
+        border-radius: var(--radius-sm);
+        font-family: var(--font-body);
+        font-weight: 700;
+        cursor: pointer;
+        transition: transform var(--motion-fast) var(--ease-standard);
+      }
+      .btn-pixel:active { transform: translate(2px, 2px); box-shadow: none !important; }
+      .btn-primary {
+        background: var(--accent);
+        color: var(--accent-on);
+        box-shadow: 3px 3px 0 var(--reminder-warm-deep);
+      }
+      .btn-secondary {
+        background: var(--surface);
+        color: var(--fg);
+        border-color: var(--border);
+        box-shadow: 3px 3px 0 var(--border-soft);
+      }
+      .expanded-card .btn-pixel { font-size: 9px; padding: 5px 8px; border-radius: 6px; box-shadow: 2px 2px 0 var(--border-soft); }
+      .expanded-card .btn-pixel.btn-primary { box-shadow: 2px 2px 0 var(--reminder-warm-deep); }
+      /* 提醒态 */
+      .reminder-island {
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        height: 30px;
+        background: var(--reminder-warm);
+        border-radius: 0 0 10px 10px;
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        padding-inline: var(--space-3);
+        z-index: 4;
+        animation: remindPulse 1s ease-in-out infinite alternate;
+        white-space: nowrap;
+      }
+      @keyframes remindPulse {
+        from { filter: brightness(0.82); }
+        to { filter: brightness(1); }
+      }
+      .reminder-island .msg {
+        color: rgba(5, 5, 5, 0.88);
+        font-size: var(--text-xs);
+        font-weight: 700;
+      }
+      .state-meta { padding: var(--space-4) var(--space-5) var(--space-5); }
+      .state-meta .name {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        font-family: var(--font-display);
+        font-size: var(--text-sm);
+      }
+      .state-meta .name .zh { font-family: var(--font-body); font-weight: 700; font-size: var(--text-base); }
+      .state-meta .trigger {
+        margin-top: var(--space-2);
+        color: var(--muted);
+        font-size: var(--text-sm);
+      }
+      .state-meta .trigger b { color: var(--fg-2); font-weight: 600; }
+
+      /* ---------- 组件拆解 ---------- */
+      .parts-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: var(--space-5);
+      }
+      .part {
+        border: 1px solid var(--border-soft);
+        border-radius: var(--radius-md);
+        background: var(--surface);
+        padding: var(--space-5);
+      }
+      .part.wide { grid-column: span 2; }
+      .part h3 { font-size: var(--text-xs); color: var(--meta); font-weight: 400; }
+      .part .zh-name { font-weight: 700; margin-top: var(--space-1); }
+      .part .demo { margin-top: var(--space-4); }
+      .dot-row { display: flex; gap: var(--space-5); }
+      .dot-item { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); }
+      .dot-item .dot { width: 14px; height: 14px; }
+      .dot-item span { font-size: var(--text-xs); color: var(--muted); }
+      .dot.d-good { background: var(--success); }
+      .dot.d-warn { background: var(--warn); }
+      .dot.d-bad { background: var(--danger); }
+      .dot.d-idle { background: var(--idle-gray); animation: none; }
+      /* 状态胶囊（三档：很棒 / 还行 / 要注意） */
+      .status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-2);
+        padding: var(--space-2) var(--space-4);
+        background: rgba(0, 0, 0, 0.82);
+        border-radius: var(--radius-pill);
+      }
+      .status-pill .n { font-size: var(--text-sm); color: var(--fg); font-weight: 700; }
+      .status-pill small { color: var(--muted); font-size: var(--text-xs); }
+      /* 番茄钟 */
+      .timer-demo {
+        font-family: var(--font-mono);
+        font-size: var(--text-2xl);
+        color: var(--fg);
+        text-shadow: 3px 3px 0 var(--border-soft);
+      }
+      .timer-demo .lbl { display: block; font-size: var(--text-xs); color: var(--muted); text-shadow: none; margin-bottom: var(--space-2); }
+      /* 按钮组 */
+      .btn-row { display: flex; gap: var(--space-4); flex-wrap: wrap; }
+      .btn-row .btn-pixel { font-size: var(--text-sm); padding: var(--space-3) var(--space-5); }
+      /* 统计卡片 */
+      .stat-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-3); }
+      .stat-card {
+        background: var(--surface-warm);
+        border: 1px solid var(--border-soft);
+        border-radius: var(--radius-sm);
+        padding: var(--space-4);
+      }
+      .stat-card strong {
+        display: block;
+        font-family: var(--font-display);
+        font-size: var(--text-lg);
+        line-height: 1.4;
+      }
+      .stat-card strong .unit { font-size: var(--text-xs); color: var(--fg-2); }
+      .stat-card span { color: var(--muted); font-size: var(--text-xs); }
+      /* 菜单栏下拉 */
+      .menubar-demo .demo { position: relative; margin-top: var(--space-4); }
+      .menubar-strip {
+        height: 26px;
+        background: var(--macos-menu);
+        border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+        display: flex;
+        align-items: center;
+        gap: var(--space-4);
+        padding-inline: var(--space-3);
+        font-size: var(--text-xs);
+        color: rgba(255, 247, 214, 0.85);
+      }
+      .menu-dropdown {
+        position: absolute;
+        top: 26px;
+        left: var(--space-3);
+        width: 220px;
+        background: var(--macos-menu);
+        border: 1px solid rgba(255, 247, 214, 0.12);
+        border-radius: var(--radius-sm);
+        padding: var(--space-1);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        z-index: 5;
+      }
+      .menu-dropdown .mi {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 5px var(--space-3);
+        border-radius: 6px;
+        font-size: var(--text-xs);
+        color: var(--fg);
+      }
+      .menu-dropdown .mi kbd {
+        font-family: inherit;
+        color: var(--muted);
+        font-size: 10px;
+      }
+      .menu-dropdown .mi.hot { background: var(--border); }
+      .menu-dropdown .mi.disabled { color: var(--muted); }
+      .menu-dropdown hr {
+        border: 0;
+        border-top: 1px solid rgba(255, 247, 214, 0.12);
+        margin: var(--space-1) var(--space-2);
+      }
+      .menubar-spacer { height: 216px; }
+      /* 系统通知 */
+      .notify {
+        background: var(--macos-notify);
+        border: 1px solid rgba(255, 247, 214, 0.1);
+        border-radius: 14px;
+        padding: var(--space-3);
+        display: flex;
+        gap: var(--space-3);
+        align-items: center;
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(10px);
+      }
+      .notify .icon {
+        width: 38px;
+        height: 38px;
+        flex: none;
+        border-radius: 9px;
+        background: var(--island-black);
+        border: 1px solid var(--border-soft);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      }
+      .notify .tt { font-size: var(--text-xs); font-weight: 700; }
+      .notify .bd { font-size: var(--text-xs); color: var(--fg-2); margin-top: 2px; }
+      .notify-note { margin-top: var(--space-3); color: var(--muted); font-size: var(--text-xs); }
+      /* 山峰三档 */
+      .mountain-row { display: flex; align-items: flex-end; gap: var(--space-8); }
+      .mountain-item { text-align: center; }
+      .mountain-item span { display: block; margin-top: var(--space-2); font-size: var(--text-xs); color: var(--muted); }
+
+      /* ---------- 游戏化系统 ---------- */
+      .game-block + .game-block { margin-top: var(--space-8); }
+      .game-block > h3 { font-size: var(--text-xs); color: var(--meta); font-weight: 400; }
+      .game-block > .zh-name { font-weight: 700; margin-top: var(--space-1); margin-bottom: var(--space-4); }
+      .game-panel {
+        border: 1px solid var(--border-soft);
+        border-radius: var(--radius-md);
+        background: var(--surface);
+        padding: var(--space-5);
+      }
+      /* 休息段流程条 */
+      .flow-bar { display: flex; align-items: stretch; gap: var(--space-2); }
+      .flow-step {
+        flex: 1;
+        border: 1px dashed var(--border-soft);
+        border-radius: var(--radius-sm);
+        background: var(--screen-bg);
+        padding: var(--space-3);
+      }
+      .flow-step .t {
+        display: block;
+        font-family: var(--font-mono);
+        font-size: 9px;
+        color: var(--meta);
+        margin-bottom: var(--space-2);
+      }
+      .flow-step .d { font-size: var(--text-xs); color: var(--fg-2); }
+      .flow-step .d b { color: var(--fg); font-weight: 600; }
+      .flow-arrow {
+        align-self: center;
+        flex: none;
+        font-family: var(--font-mono);
+        font-size: var(--text-sm);
+        color: var(--border);
+      }
+      /* 怪物卡片 */
+      .monster-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--space-4); }
+      .monster-card {
+        border: 1px solid var(--border-soft);
+        border-radius: var(--radius-md);
+        background: var(--surface);
+        padding: var(--space-4);
+      }
+      .monster-arena {
+        height: 92px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--screen-bg);
+        border: 1px dashed var(--border-soft);
+        border-radius: var(--radius-sm);
+        margin-bottom: var(--space-3);
+      }
+      .monster-card .m-id { font-family: var(--font-mono); font-size: 9px; color: var(--meta); }
+      .monster-card .m-name { font-weight: 700; font-size: var(--text-sm); margin-top: 2px; }
+      .monster-card .m-play { margin-top: var(--space-2); font-size: var(--text-xs); color: var(--fg-2); }
+      .monster-card .m-axis { margin-top: var(--space-2); font-size: 10px; color: var(--muted); }
+      .monster-card .m-sfx {
+        margin-top: var(--space-3);
+        display: inline-block;
+        padding: 4px var(--space-2);
+        border: 1px dashed var(--border);
+        border-radius: var(--radius-pill);
+        font-size: 10px;
+        color: var(--muted);
+      }
+      /* 到位渐进声效卡 */
+      .ratchet-card { display: grid; grid-template-columns: 1fr 1.2fr; gap: var(--space-6); }
+      .ratchet-points {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        gap: var(--space-2);
+        font-size: var(--text-xs);
+        color: var(--fg-2);
+      }
+      .ratchet-points li::before { content: "▸ "; color: var(--meta); }
+      .ratchet-note { margin-top: var(--space-4); font-size: 10px; color: var(--muted); }
+      .ratchet-diagram {
+        background: var(--screen-bg);
+        border: 1px dashed var(--border-soft);
+        border-radius: var(--radius-sm);
+        padding: var(--space-5) var(--space-4) var(--space-3);
+      }
+      .ratchet-track { position: relative; height: 60px; border-bottom: 2px solid var(--border-soft); }
+      .ratchet-tick { position: absolute; bottom: 0; width: 3px; background: var(--meta); }
+      .ratchet-tick.hot { background: var(--accent); }
+      .ratchet-labels {
+        display: flex;
+        justify-content: space-between;
+        margin-top: var(--space-2);
+        font-family: var(--font-mono);
+        font-size: 8px;
+        color: var(--muted);
+      }
+      /* 随机遭遇 + 长期机制 */
+      .mech-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-5); }
+      .mech-card h4 { margin: 0 0 var(--space-2); font-size: var(--text-sm); font-weight: 700; }
+      .mech-card .m-sub { font-size: var(--text-xs); color: var(--muted); margin-bottom: var(--space-4); }
+      .deck-row { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+      .deck-chip {
+        font-family: var(--font-mono);
+        font-size: 9px;
+        color: var(--fg);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 5px 7px;
+        background: var(--screen-bg);
+      }
+      .deck-loop { color: var(--meta); font-family: var(--font-mono); font-size: var(--text-sm); }
+      .dex-wall { display: grid; grid-template-columns: repeat(5, 1fr); gap: var(--space-2); text-align: center; }
+      .dex-slot {
+        background: var(--screen-bg);
+        border: 1px dashed var(--border-soft);
+        border-radius: var(--radius-sm);
+        padding: var(--space-3) var(--space-1) var(--space-2);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: var(--space-2);
+      }
+      /* 剪影：调色板全部映射为 --border-soft 单色，不用滤镜 */
+      .dex-slot .dn { font-size: 9px; color: var(--muted); }
+      .dex-stars { font-size: 10px; color: var(--accent); letter-spacing: 2px; }
+      .dex-stars .off { color: var(--border-soft); }
+      .streak-num {
+        font-family: var(--font-display);
+        font-size: var(--text-2xl);
+        color: var(--fg);
+        text-shadow: 3px 3px 0 var(--border-soft);
+      }
+      .streak-num .unit { font-size: var(--text-xs); color: var(--fg-2); text-shadow: none; }
+      .grow-line { display: flex; align-items: flex-end; gap: var(--space-3); }
+      .grow-item { text-align: center; }
+      .grow-item > span { display: block; margin-top: var(--space-2); font-size: 9px; color: var(--muted); }
+      .grow-arrow { align-self: center; color: var(--border); font-family: var(--font-mono); font-size: var(--text-xs); }
+      .grow-drops { display: flex; gap: 3px; justify-content: center; margin-bottom: var(--space-1); }
+      /* 安全边界终端卡 */
+      .term-card {
+        background: var(--island-black);
+        border: 1px solid var(--border-soft);
+        border-radius: var(--radius-md);
+        padding: var(--space-5);
+      }
+      .term-bar { display: flex; gap: 6px; margin-bottom: var(--space-4); }
+      .term-bar i { width: 10px; height: 10px; border-radius: var(--radius-pill); }
+      .term-bar i:nth-child(1) { background: var(--danger); }
+      .term-bar i:nth-child(2) { background: var(--warn); }
+      .term-bar i:nth-child(3) { background: var(--success); }
+      .term-card .tl {
+        display: block;
+        font-family: ui-monospace, monospace;
+        font-size: var(--text-xs);
+        line-height: 2;
+        color: var(--fg-2);
+        white-space: pre;
+      }
+      .term-card .tl .k { color: var(--success); }
+      .term-card .tl .v { color: var(--warn); }
+      .term-card .tl .c { color: var(--muted); }
+      .term-card .tl .p { color: var(--border); }
+
+      /* ---------- 设计规范 ---------- */
+      .spec-grid {
+        display: grid;
+        grid-template-columns: 1.2fr 1fr;
+        gap: var(--space-5);
+      }
+      .spec-panel {
+        border: 1px solid var(--border-soft);
+        border-radius: var(--radius-md);
+        background: var(--surface);
+        padding: var(--space-5);
+      }
+      .spec-panel h3 { font-size: var(--text-xs); color: var(--meta); font-weight: 400; margin-bottom: var(--space-4); }
+      .swatch-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-3); }
+      .sw { border: 1px solid var(--border-soft); border-radius: var(--radius-sm); overflow: hidden; }
+      .sw .c { height: 44px; }
+      .sw .meta { padding: var(--space-2); }
+      .sw .meta b { display: block; font-size: 10px; font-family: ui-monospace, monospace; color: var(--fg); }
+      .sw .meta span { font-size: 10px; font-family: ui-monospace, monospace; color: var(--muted); }
+      .type-sample + .type-sample { margin-top: var(--space-4); }
+      .type-sample .lbl { font-size: var(--text-xs); color: var(--muted); margin-bottom: var(--space-1); }
+      .t-display { font-family: var(--font-display); font-size: var(--text-lg); }
+      .t-mono { font-family: var(--font-mono); font-size: var(--text-sm); }
+      .t-body { font-size: var(--text-base); color: var(--fg-2); }
+      .space-row { display: flex; align-items: center; gap: var(--space-3); margin-top: var(--space-2); }
+      .space-row .bar { height: 12px; background: var(--border); }
+      .space-row span { font-family: ui-monospace, monospace; font-size: 10px; color: var(--muted); width: 64px; }
+      .radius-row { display: flex; gap: var(--space-4); margin-top: var(--space-2); align-items: flex-end; }
+      .radius-box {
+        width: 64px;
+        height: 44px;
+        border: 1px solid var(--border);
+        background: var(--surface-warm);
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        font-size: 9px;
+        color: var(--muted);
+        padding-bottom: 2px;
+      }
+
+      /* ---------- 页脚 ---------- */
+      footer {
+        margin-top: var(--section-y-tablet);
+        padding-top: var(--space-6);
+        border-top: 1px dashed var(--border-soft);
+        display: flex;
+        justify-content: space-between;
+        color: var(--muted);
+        font-size: var(--text-xs);
+      }
+      footer .en { font-family: var(--font-mono); }
+
+      @media (max-width: 960px) {
+        .states-grid, .parts-grid, .spec-grid, .monster-grid, .mech-grid, .ratchet-card { grid-template-columns: 1fr; }
+        .part.wide { grid-column: auto; }
+        .hero { grid-template-columns: 1fr; }
+        .flow-bar { flex-direction: column; }
+        .flow-arrow { transform: rotate(90deg); }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="stage">
+      <div class="container">
+
+        <!-- ============ 头部 ============ -->
+        <header class="hero" data-od-id="hero">
+          <div>
+            <p class="eyebrow">NeckUp for Mac · Design Review v1</p>
+            <h1 class="wordmark" style="margin-top: var(--space-4)">NECK<span class="up">UP</span></h1>
+            <p class="tagline">
+              Mac 上第一个用 <strong>AirPods 运动传感器</strong>守护颈椎的<strong>灵动岛应用</strong>。
+              工作时它安静地待在刘海里；你一低头，它就轻轻提醒你。
+            </p>
+            <div class="hero-badges">
+              <span class="chip">macOS 14+</span>
+              <span class="chip">CMHeadphoneMotionManager</span>
+              <span class="chip">25+5 番茄钟</span>
+              <span class="chip">数据全本地 · 零上传</span>
+            </div>
+          </div>
+          <div class="mascot-block">
+            <div class="px-host">
+              <div
+                class="px"
+                data-scale="8"
+                data-palette="K=var(--island-black);S=var(--px-shell);s=var(--px-shell-dark);H=var(--px-skin);F=var(--px-shell-dark)"
+                data-map="
+....KKKKKK.....
+..KKSSSSSSKK...
+.KSSSSSSSSSSK..
+.KSSssSSssSSSK.
+.KSSSSSSSSSSKHH
+.KSsSSSSSSsSKHK
+.KSSSSSSSSSSKHH
+.KSSssSSssSSSK.
+..KKSSSSSSKK...
+..FFK....KFF..."
+              ></div>
+            </div>
+            <p class="mascot-caption">吉祥物 · 像素乌龟「慢慢」</p>
+          </div>
+        </header>
+
+        <!-- ============ 场景区 ============ -->
+        <section data-od-id="scene">
+          <div class="sec-head">
+            <p class="eyebrow">Stage 01 · In Situ</p>
+            <h2>真实场景<span class="en">MACBOOK NOTCH</span></h2>
+            <p class="sub">岛主体常驻刘海区域：左侧呼吸圆点实时反映姿势状态，平时不出现任何数字；番茄钟进行中右侧才显示倒计时。</p>
+          </div>
+          <div class="scene-wrap">
+            <div class="macbook">
+              <div class="lid">
+                <div class="fake-menubar">
+                  <span></span><span>NeckUp</span><span>文件</span><span>编辑</span><span>显示</span>
+                  <span class="right"><span>Wi‑Fi</span><span>100%</span><span>周二 14:25</span></span>
+                </div>
+                <div class="notch"></div>
+                <div class="island" style="width: 340px">
+                  <div class="side"><span class="dot"></span></div>
+                  <div class="gap"></div>
+                  <div class="side"></div>
+                </div>
+                <div class="screen-content">
+<span class="ln"><span class="c1">// PostureMonitor.swift — 低头第 47 分钟</span></span>
+<span class="ln"><span class="c2">let</span> pitch = motion.attitude.pitch * 180 / .pi</span>
+<span class="ln">smoothed = smoothed * 0.7 + pitch * 0.3  <span class="c1">// 1s 滑动平均防抖</span></span>
+<span class="ln">&nbsp;</span>
+<span class="ln"><span class="c2">if</span> smoothed &lt; threshold &amp;&amp; sustained &gt; <span class="c3">5</span> {</span>
+<span class="ln">    island.enter(<span class="c3">.reminder</span>)  <span class="c1">// 「抬头一下 🐢」</span></span>
+<span class="ln">}</span>
+<span class="ln">&nbsp;</span>
+<span class="ln"><span class="c1">// 回正 1s 内退回收缩态；连续无视 3 次降级为系统通知</span></span>
+<span class="ln"><span class="c2">if</span> ignoredCount &gt;= <span class="c3">3</span> {</span>
+<span class="ln">    degrade(to: <span class="c3">.systemNotification</span>, cooldown: <span class="c3">30</span> * <span class="c3">60</span>)</span>
+<span class="ln">}</span>
+<span class="ln">&nbsp;</span>
+<span class="ln"><span class="c1">// G2 · 山峰成长：好姿势时长 + 完成的番茄钟为其浇水</span></span>
+<span class="ln">mountain.grow(by: goodPostureSec / <span class="c3">3600</span>)</span>
+                </div>
+              </div>
+              <div class="base"></div>
+            </div>
+          </div>
+          <div class="scene-caption">
+            <span><b>左侧</b> 呼吸圆点 · 绿 = 姿势良好</span>
+            <span><b>右侧</b> 平时留白 · 番茄钟运行时才显示倒计时</span>
+            <span><b>宽度</b> 刘海两侧各延伸约 60pt，不遮挡菜单栏</span>
+          </div>
+        </section>
+
+        <!-- ============ 三态对照区 ============ -->
+        <section data-od-id="states">
+          <div class="sec-head">
+            <p class="eyebrow">Stage 02 · Three States</p>
+            <h2>灵动岛三态<span class="en">COLLAPSED / EXPANDED / REMINDER</span></h2>
+            <p class="sub">无刘海 Mac（Mac mini / Studio / 外接显示器）降级为屏幕顶部居中的悬浮胶囊，行为完全一致。</p>
+          </div>
+          <div class="states-grid">
+            <!-- 收缩态 -->
+            <article class="state-card">
+              <div class="state-canvas">
+                <div class="state-strip"><span>文件 编辑 显示</span><span>14:25</span></div>
+                <div class="notch"></div>
+                <div class="mini-island" style="width: 190px">
+                  <div class="side"><span class="dot"></span></div>
+                  <div class="gap"></div>
+                  <div class="side"></div>
+                </div>
+              </div>
+              <div class="state-meta">
+                <p class="name"><span>STATE 1</span><span class="zh">收缩态 · 默认</span></p>
+                <p class="trigger"><b>常驻</b>。左侧呼吸圆点（绿/黄/红 = 姿势状态），平时不给任何数字；番茄钟进行中右侧才显示倒计时。摘下 AirPods 变灰显示「未佩戴」。</p>
+              </div>
+            </article>
+            <!-- 展开态 -->
+            <article class="state-card">
+              <div class="state-canvas tall">
+                <div class="state-strip"><span>文件 编辑 显示</span><span>14:25</span></div>
+                <div class="notch"></div>
+                <div class="mini-island" style="width: 190px">
+                  <div class="side"><span class="dot"></span></div>
+                  <div class="gap"></div>
+                  <div class="side"></div>
+                </div>
+                <div class="expanded-card">
+                  <div class="row"><span>姿势不错，继续保持</span><span class="word">今天很棒</span></div>
+                  <div class="posture-track"><span class="ball"></span></div>
+                  <p class="track-hint">小球跟着你的头走，居中就是坐直了</p>
+                  <p class="stats-line">今天状态不错，下午低头有点多</p>
+                  <div class="btns">
+                    <span class="btn-pixel btn-primary">开始番茄 25:00 ▸</span>
+                    <span class="btn-pixel btn-secondary">暂停监测</span>
+                    <span class="btn-pixel btn-secondary">坐直校准</span>
+                  </div>
+                </div>
+              </div>
+              <div class="state-meta">
+                <p class="name"><span>STATE 2</span><span class="zh">展开态</span></p>
+                <p class="trigger"><b>鼠标悬停</b>展开，移出 0.5s 收回；<b>单击</b>锁定展开。向下展开约 140pt，0.25s 弹性动画，含迷你姿态指示器与番茄钟控制。</p>
+              </div>
+            </article>
+            <!-- 提醒态 -->
+            <article class="state-card">
+              <div class="state-canvas">
+                <div class="state-strip"><span>文件 编辑 显示</span><span>14:25</span></div>
+                <div class="notch"></div>
+                <div class="reminder-island">
+                  <div
+                    class="px"
+                    data-scale="2"
+                    data-palette="K=var(--accent-on);S=var(--px-shell);s=var(--px-shell-dark);H=var(--px-skin);F=var(--px-shell-dark)"
+                    data-map="
+....KKKKKK.....
+..KKSSSSSSKK...
+.KSSSSSSSSSSK..
+.KSSssSSssSSSK.
+.KSSSSSSSSSSKHH
+.KSsSSSSSSsSKHK
+.KSSSSSSSSSSKHH
+.KSSssSSssSSSK.
+..KKSSSSSSKK...
+..FFK....KFF..."
+                  ></div>
+                  <span class="msg">抬头一下 🐢</span>
+                </div>
+              </div>
+              <div class="state-meta">
+                <p class="name"><span>STATE 3</span><span class="zh">提醒态</span></p>
+                <p class="trigger"><b>低头持续 &gt; 3s 且超灵敏度阈值</b>即触发。阈值不向用户暴露角度，设置里只有三档：<b>严格 / 标准（默认）/ 宽松</b>。岛屿变暖黄并呼吸脉动；回正 1s 内退回；连续无视 3 次降级为系统通知。</p>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <!-- ============ 组件拆解区 ============ -->
+        <section data-od-id="components">
+          <div class="sec-head">
+            <p class="eyebrow">Stage 03 · Components</p>
+            <h2>组件拆解<span class="en">UI PARTS</span></h2>
+          </div>
+          <div class="parts-grid">
+            <div class="part">
+              <h3>STATUS DOT</h3>
+              <p class="zh-name">呼吸圆点 · 四态</p>
+              <div class="demo dot-row">
+                <div class="dot-item"><span class="dot d-good"></span><span>姿势良好</span></div>
+                <div class="dot-item"><span class="dot d-warn"></span><span>临界</span></div>
+                <div class="dot-item"><span class="dot d-bad"></span><span>低头中</span></div>
+                <div class="dot-item"><span class="dot d-idle"></span><span>未佩戴</span></div>
+              </div>
+            </div>
+            <div class="part">
+              <h3>STATUS PILL</h3>
+              <p class="zh-name">状态胶囊 · 三档（替代评分数字）</p>
+              <div class="demo" style="display: grid; gap: var(--space-2); justify-items: start">
+                <span class="status-pill"><span class="dot d-good"></span><span class="n">很棒</span><small>继续保持</small></span>
+                <span class="status-pill"><span class="dot d-warn"></span><span class="n">还行</span><small>偶尔低头</small></span>
+                <span class="status-pill"><span class="dot d-bad"></span><span class="n">要注意</span><small>该抬头活动了</small></span>
+              </div>
+            </div>
+            <div class="part">
+              <h3>POMODORO</h3>
+              <p class="zh-name">番茄钟倒计时</p>
+              <div class="demo timer-demo">
+                <span class="lbl">FOCUS · 专注中</span>
+                25:00
+              </div>
+            </div>
+            <div class="part">
+              <h3>BUTTONS</h3>
+              <p class="zh-name">按钮 · 主 / 次</p>
+              <div class="demo btn-row">
+                <span class="btn-pixel btn-primary">开始番茄 ▸</span>
+                <span class="btn-pixel btn-secondary">暂停监测</span>
+              </div>
+            </div>
+            <div class="part wide">
+              <h3>DAY STATS</h3>
+              <p class="zh-name">当日统计卡片</p>
+              <div class="demo stat-cards">
+                <div class="stat-card"><strong>3<span class="unit">h</span> 42<span class="unit">m</span></strong><span>良好姿势时长</span></div>
+                <div class="stat-card"><strong>12<span class="unit"> 次</span></strong><span>低头次数</span></div>
+                <div class="stat-card"><strong>125<span class="unit"> 分钟</span></strong><span>专注时长</span></div>
+              </div>
+              <p style="margin-top: var(--space-3); color: var(--muted); font-size: var(--text-xs)">详细数据只出现在菜单栏「今日统计」详情里，岛上一句人话带过。</p>
+            </div>
+            <div class="part wide menubar-demo">
+              <h3>MENU BAR</h3>
+              <p class="zh-name">菜单栏下拉菜单（F8 · 灵动岛不可用时的兜底入口）</p>
+              <div class="demo">
+                <div class="menubar-strip">
+                  <span></span><span>访达</span><span>文件</span><span>编辑</span><span>显示</span><span>窗口</span>
+                </div>
+                <div class="menu-dropdown">
+                  <div class="mi hot"><span>展开灵动岛</span><kbd>⌃N</kbd></div>
+                  <div class="mi"><span>开始番茄钟</span><kbd>⌘P</kbd></div>
+                  <div class="mi"><span>暂停监测</span><kbd>⌘.</kbd></div>
+                  <hr />
+                  <div class="mi"><span>今日统计…</span></div>
+                  <div class="mi"><span>设置…</span><kbd>⌘,</kbd></div>
+                  <hr />
+                  <div class="mi disabled"><span>退出 NeckUp</span><kbd>⌘Q</kbd></div>
+                </div>
+                <div class="menubar-spacer"></div>
+              </div>
+            </div>
+            <div class="part">
+              <h3>NOTIFICATION</h3>
+              <p class="zh-name">系统通知 · 提醒降级</p>
+              <div class="demo">
+                <div class="notify">
+                  <div class="icon">
+                    <div
+                      class="px"
+                      data-scale="2"
+                      data-palette="K=var(--bg);S=var(--px-shell);s=var(--px-shell-dark);H=var(--px-skin);F=var(--px-shell-dark)"
+                      data-map="
+....KKKKKK.....
+..KKSSSSSSKK...
+.KSSSSSSSSSSK..
+.KSSssSSssSSSK.
+.KSSSSSSSSSSKHH
+.KSsSSSSSSsSKHK
+.KSSSSSSSSSSKHH
+.KSSssSSssSSSK.
+..KKSSSSSSKK...
+..FFK....KFF..."
+                    ></div>
+                  </div>
+                  <div>
+                    <p class="tt">NeckUp</p>
+                    <p class="bd">已经低头很久啦，抬头活动一下颈椎吧</p>
+                  </div>
+                </div>
+                <p class="notify-note">连续无视 3 次后触发，30 分钟内岛不再打扰。</p>
+              </div>
+            </div>
+            <div class="part wide">
+              <h3>MOUNTAIN × POMODORO</h3>
+              <p class="zh-name">番茄果实 · 山峰三档（G3：每个番茄钟按姿势质量结果）</p>
+              <div class="demo mountain-row">
+                <div class="mountain-item">
+                  <div class="px-host">
+                    <div
+                      class="px"
+                      data-scale="5"
+                      data-palette="S=var(--fg);M=var(--px-mountain);s=var(--px-mountain-dark)"
+                      data-map="
+........SS........
+.......SSSS.......
+......SSMMSS......
+.....SSMMMMSS.....
+....MMMMMsMMMM....
+...MMMMMsMMMMMM...
+..MMMMMMMMMMMMMM..
+.MMMMMMMMMMMMMMMM.
+MMMMMMMMMMMMMMMMMM"
+                    ></div>
+                  </div>
+                  <span>姿势优 = 雪峰</span>
+                </div>
+                <div class="mountain-item">
+                  <div class="px-host">
+                    <div
+                      class="px"
+                      data-scale="5"
+                      data-palette="S=var(--px-mountain-dark);M=var(--px-mountain);s=var(--px-mountain-dark)"
+                      data-map="
+........MM........
+.......MMMM.......
+......MMMMMM......
+.....MMMMMMMM.....
+....MMMMMsMMMM....
+...MMMMMsMMMMMM...
+..MMMMMMMMMMMMMM..
+.MMMMMMMMMMMMMMMM.
+MMMMMMMMMMMMMMMMMM"
+                    ></div>
+                  </div>
+                  <span>姿势良 = 青山</span>
+                </div>
+                <div class="mountain-item">
+                  <div class="px-host">
+                    <div
+                      class="px"
+                      data-scale="5"
+                      data-palette="S=var(--px-bald);M=var(--px-bald);s=var(--px-shell-dark)"
+                      data-map="
+........MM........
+.......MMMM.......
+......MMMMMM......
+.....MMMMMMMM.....
+....MMMMMsMMMM....
+...MMMMMsMMMMMM...
+..MMMMMMMMMMMMMM..
+.MMMMMMMMMMMMMMMM.
+MMMMMMMMMMMMMMMMMM"
+                    ></div>
+                  </div>
+                  <span>姿势差 = 秃山</span>
+                </div>
+              </div>
+            </div>
+            <div class="part">
+              <h3>REMINDER COPY</h3>
+              <p class="zh-name">温和提醒文案池（G7）</p>
+              <div class="demo" style="display: grid; gap: var(--space-2)">
+                <span class="chip">「抬头一下 🐢」</span>
+                <span class="chip">「脖子说它想你了」</span>
+                <span class="chip">「山峰等你长高」</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============ 游戏化系统区 ============ -->
+        <section data-od-id="gamification">
+          <div class="sec-head">
+            <p class="eyebrow">Stage 04 · Gamification</p>
+            <h2>游戏化系统<span class="en">STIFF MONSTERS</span></h2>
+            <p class="sub">久坐低头会在山谷里刷出「僵硬怪」。番茄钟的休息段，脖子就是你的武器：一只怪物只考一个康复动作，玩 60 秒 = 做完一组医学推荐的舒展；战利品水滴用来浇灌山峰。</p>
+          </div>
+
+          <!-- 子区块 1 · 休息段流程条 -->
+          <div class="game-block">
+            <h3>BREAK FLOW</h3>
+            <p class="zh-name">休息段流程条 · 5 分钟全链路</p>
+            <div class="game-panel flow-bar">
+              <div class="flow-step"><span class="t">STEP 1 · 25:00</span><p class="d"><b>番茄结束</b>，提示音响起，岛呼吸变黄</p></div>
+              <span class="flow-arrow">▸</span>
+              <div class="flow-step"><span class="t">STEP 2 · 展开</span><p class="d">岛展开为 <b>360×260pt</b> 游戏窗</p></div>
+              <span class="flow-arrow">▸</span>
+              <div class="flow-step"><span class="t">STEP 3 · 第 1 分钟</span><p class="d"><b>随机遭遇战</b>：五只僵硬怪之一登场</p></div>
+              <span class="flow-arrow">▸</span>
+              <div class="flow-step"><span class="t">STEP 4 · 中段</span><p class="d">语音提示<b>起身活动</b>，倒杯水走一走</p></div>
+              <span class="flow-arrow">▸</span>
+              <div class="flow-step"><span class="t">STEP 5 · 收尾</span><p class="d"><b>远眺倒计时</b>，看远处 20 秒放松眼睛</p></div>
+            </div>
+          </div>
+
+          <!-- 子区块 2 · 五只怪物 × 五个游戏 -->
+          <div class="game-block">
+            <h3>MONSTERS × GAMES</h3>
+            <p class="zh-name">五只僵硬怪 × 五个康复游戏 · 一怪一动作</p>
+            <div class="monster-grid">
+              <!-- M1 石斧史莱姆 -->
+              <article class="monster-card">
+                <div class="monster-arena">
+                  <div class="px-host">
+                    <div
+                      class="px"
+                      data-scale="6"
+                      data-palette="G=var(--px-stone);B=var(--px-bald);S=var(--px-skin);K=var(--island-black);s=var(--px-shell-dark)"
+                      data-map="
+...GGG......
+..GGGGG.B...
+...GGG..B...
+........B...
+..SSSSSSSS..
+.SSSSSSSSSS.
+.SSKSSSSKSS.
+.SSSSSSSSSS.
+.SSSssssSSS.
+..SSSSSSSS.."
+                    ></div>
+                  </div>
+                </div>
+                <p class="m-id">M1 · PITCH</p>
+                <p class="m-name">石斧史莱姆</p>
+                <p class="m-play">缓慢点头 = 劈砍，一斧一斧劈开它。</p>
+                <p class="m-axis">前屈 ≤ 30° / 后伸 ≤ 20°</p>
+                <span class="m-sfx">棘轮咔哒逐级上行 · 劈中 = 木质劈裂音</span>
+              </article>
+              <!-- M2 双头甲虫 -->
+              <article class="monster-card">
+                <div class="monster-arena">
+                  <div class="px-host">
+                    <div
+                      class="px"
+                      data-scale="6"
+                      data-palette="D=var(--danger);K=var(--island-black)"
+                      data-map="
+.K.K.....K.K.
+KDKDK...KDKDK
+.KDK.....KDK.
+..DDDDDDDDD..
+.DDDDDDDDDDD.
+D.DDDDDDDDD.D
+..D.D...D.D.."
+                    ></div>
+                  </div>
+                </div>
+                <p class="m-id">M2 · YAW</p>
+                <p class="m-name">双头甲虫</p>
+                <p class="m-play">左右转头注视 = 格挡，盯住它的两只头。</p>
+                <p class="m-axis">旋转 ≤ 40° · 保持 3s</p>
+                <span class="m-sfx">棘轮音 + 盾挡「铛」</span>
+              </article>
+              <!-- M3 天平水母 -->
+              <article class="monster-card">
+                <div class="monster-arena">
+                  <div class="px-host">
+                    <div
+                      class="px"
+                      data-scale="6"
+                      data-palette="J=var(--px-jelly);K=var(--island-black);j=var(--border);A=var(--accent)"
+                      data-map="
+....JJJJJ....
+...JJJJJJJ...
+..JJJJJJJJJ..
+..JKJJJJJKJ..
+..JJJJJJJJJ..
+...j.j.j.j...
+...j.....j...
+..AA.....AA..
+.AAAA...AAAA."
+                    ></div>
+                  </div>
+                </div>
+                <p class="m-id">M3 · ROLL</p>
+                <p class="m-name">天平水母</p>
+                <p class="m-play">侧屈倾斜托盘接宝石，大宝石要定住。</p>
+                <p class="m-axis">侧屈 ≤ 30° · 大宝石定住 5s = 静态拉伸</p>
+                <span class="m-sfx">连续蓄能音，宝石落盘「叮」</span>
+              </article>
+              <!-- M4 气功龟慢慢 -->
+              <article class="monster-card">
+                <div class="monster-arena">
+                  <div class="px-host">
+                    <div
+                      class="px"
+                      data-scale="6"
+                      data-palette="K=var(--island-black);S=var(--px-shell);s=var(--px-shell-dark);H=var(--reminder-warm);F=var(--px-shell-dark)"
+                      data-map="
+....KKKKKK.....
+..KKSSSSSSKK...
+.KSSSSSSSSSSK..
+.KSSssSSssSSSK.
+.KSSSSSSSSSSKHH
+.KSsSSSSSSsSKHK
+.KSSSSSSSSSSKHH
+.KSSssSSssSSSK.
+..KKSSSSSSKK...
+..FFK....KFF..."
+                    ></div>
+                  </div>
+                </div>
+                <p class="m-id">M4 · CHIN TUCK</p>
+                <p class="m-name">气功龟慢慢</p>
+                <p class="m-play">收下巴挤双下巴蓄力，放出一记气功波。</p>
+                <p class="m-axis">收下巴 · 保持 5s</p>
+                <span class="m-sfx">连续蓄力 sweep + 爆发音</span>
+              </article>
+              <!-- M5 斜月蝙蝠 -->
+              <article class="monster-card">
+                <div class="monster-arena">
+                  <div class="px-host">
+                    <div
+                      class="px"
+                      data-scale="6"
+                      data-palette="B=var(--px-bat);Y=var(--accent);K=var(--island-black)"
+                      data-map="
+B...........B
+BB....Y....BB
+BBB..YYY..BBB
+BBBBBBBBBBBBB
+.BBKBBBBBKBB.
+..BBB.B.BBB..
+...B.....B..."
+                    ></div>
+                  </div>
+                </div>
+                <p class="m-id">M5 · PITCH+YAW</p>
+                <p class="m-name">斜月蝙蝠</p>
+                <p class="m-play">低头转肩瞄准，拉弓放箭射月亮。</p>
+                <p class="m-axis">前屈 ≤ 20° + 旋转 ≤ 25° 复合</p>
+                <span class="m-sfx">棘轮音 + 离弦「嗖」</span>
+              </article>
+            </div>
+          </div>
+
+          <!-- 子区块 3 · 到位渐进声效 -->
+          <div class="game-block">
+            <h3>PROGRESSIVE SFX</h3>
+            <p class="zh-name">到位渐进声效 · 「快到位了，听声音就知道」</p>
+            <div class="game-panel ratchet-card">
+              <div>
+                <ul class="ratchet-points">
+                  <li>角度每推进 10% 进度，播一次棘轮咔哒</li>
+                  <li>咔哒音高按半音阶逐级上行，越到位越「亮」</li>
+                  <li>最后 20% 咔哒加密（每 5% 一次），制造冲刺感</li>
+                  <li>到位瞬间播确认音，判定成功</li>
+                </ul>
+                <p class="ratchet-note">为什么用离散咔哒而不是连续音高？AirPods 蓝牙有 100–200ms 延迟：连续音高会被延迟抹糊，而离散咔哒是事件音——延迟只让它整体平移，次数与节奏信息不丢，听到的进度 ≈ 真实进度。</p>
+              </div>
+              <div class="ratchet-diagram">
+                <div class="ratchet-track">
+                  <span class="ratchet-tick" style="left: 10%; height: 12px"></span>
+                  <span class="ratchet-tick" style="left: 20%; height: 15px"></span>
+                  <span class="ratchet-tick" style="left: 30%; height: 18px"></span>
+                  <span class="ratchet-tick" style="left: 40%; height: 21px"></span>
+                  <span class="ratchet-tick" style="left: 50%; height: 24px"></span>
+                  <span class="ratchet-tick" style="left: 60%; height: 27px"></span>
+                  <span class="ratchet-tick" style="left: 70%; height: 30px"></span>
+                  <span class="ratchet-tick" style="left: 80%; height: 34px"></span>
+                  <span class="ratchet-tick hot" style="left: 85%; height: 38px"></span>
+                  <span class="ratchet-tick hot" style="left: 90%; height: 42px"></span>
+                  <span class="ratchet-tick hot" style="left: 95%; height: 47px"></span>
+                  <span class="ratchet-tick hot" style="left: calc(100% - 3px); height: 54px"></span>
+                </div>
+                <div class="ratchet-labels"><span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 子区块 4 · 随机遭遇 + 长期机制 -->
+          <div class="game-block">
+            <h3>ENCOUNTER & META</h3>
+            <p class="zh-name">随机遭遇 + 长期机制</p>
+            <div class="mech-grid">
+              <!-- ① 洗牌式随机遭遇 -->
+              <article class="game-panel mech-card">
+                <h4>洗牌式随机遭遇</h4>
+                <p class="m-sub">5 只怪洗牌后循环出场，五个康复动作均匀覆盖，不会连续遇到同一只。</p>
+                <div class="deck-row">
+                  <span class="deck-chip">M3</span>
+                  <span class="deck-chip">M1</span>
+                  <span class="deck-chip">M5</span>
+                  <span class="deck-chip">M2</span>
+                  <span class="deck-chip">M4</span>
+                  <span class="deck-loop">↻ 洗完重洗</span>
+                </div>
+                <p style="margin-top: var(--space-4)"><span class="chip">🔒 工作时间锁死 · 只在休息段刷怪</span></p>
+              </article>
+              <!-- ② 怪物图鉴 -->
+              <article class="game-panel mech-card">
+                <h4>怪物图鉴 · 每只 3 星熟练度</h4>
+                <p class="m-sub">重复战胜同一怪物累积星级；未点亮的怪物保持剪影。</p>
+                <div class="dex-wall">
+                  <div class="dex-slot">
+                    <div class="px-host">
+                      <div
+                        class="px"
+                        data-scale="3"
+                        data-palette="G=var(--px-stone);B=var(--px-bald);S=var(--px-skin);K=var(--island-black);s=var(--px-shell-dark)"
+                        data-map="
+...GGG......
+..GGGGG.B...
+...GGG..B...
+........B...
+..SSSSSSSS..
+.SSSSSSSSSS.
+.SSKSSSSKSS.
+.SSSSSSSSSS.
+.SSSssssSSS.
+..SSSSSSSS.."
+                      ></div>
+                    </div>
+                    <span class="dn">石斧史莱姆</span>
+                    <span class="dex-stars">★★<span class="off">★</span></span>
+                  </div>
+                  <div class="dex-slot">
+                    <div class="px-host">
+                      <div
+                        class="px"
+                        data-scale="3"
+                        data-palette="D=var(--danger);K=var(--island-black)"
+                        data-map="
+.K.K.....K.K.
+KDKDK...KDKDK
+.KDK.....KDK.
+..DDDDDDDDD..
+.DDDDDDDDDDD.
+D.DDDDDDDDD.D
+..D.D...D.D.."
+                      ></div>
+                    </div>
+                    <span class="dn">双头甲虫</span>
+                    <span class="dex-stars">★<span class="off">★★</span></span>
+                  </div>
+                  <div class="dex-slot">
+                    <div class="px-host">
+                      <div
+                        class="px dim"
+                        data-scale="3"
+                        data-palette="J=var(--border-soft);K=var(--border-soft);j=var(--border-soft);A=var(--border-soft)"
+                        data-map="
+....JJJJJ....
+...JJJJJJJ...
+..JJJJJJJJJ..
+..JKJJJJJKJ..
+..JJJJJJJJJ..
+...j.j.j.j...
+...j.....j...
+..AA.....AA..
+.AAAA...AAAA."
+                      ></div>
+                    </div>
+                    <span class="dn">？？？</span>
+                    <span class="dex-stars"><span class="off">★★★</span></span>
+                  </div>
+                  <div class="dex-slot">
+                    <div class="px-host">
+                      <div
+                        class="px dim"
+                        data-scale="3"
+                        data-palette="K=var(--border-soft);S=var(--border-soft);s=var(--border-soft);H=var(--border-soft);F=var(--border-soft)"
+                        data-map="
+....KKKKKK.....
+..KKSSSSSSKK...
+.KSSSSSSSSSSK..
+.KSSssSSssSSSK.
+.KSSSSSSSSSSKHH
+.KSsSSSSSSsSKHK
+.KSSSSSSSSSSKHH
+.KSSssSSssSSSK.
+..KKSSSSSSKK...
+..FFK....KFF..."
+                      ></div>
+                    </div>
+                    <span class="dn">？？？</span>
+                    <span class="dex-stars"><span class="off">★★★</span></span>
+                  </div>
+                  <div class="dex-slot">
+                    <div class="px-host">
+                      <div
+                        class="px dim"
+                        data-scale="3"
+                        data-palette="B=var(--border-soft);Y=var(--border-soft);K=var(--border-soft)"
+                        data-map="
+B...........B
+BB....Y....BB
+BBB..YYY..BBB
+BBBBBBBBBBBBB
+.BBKBBBBBKBB.
+..BBB.B.BBB..
+...B.....B..."
+                      ></div>
+                    </div>
+                    <span class="dn">？？？</span>
+                    <span class="dex-stars"><span class="off">★★★</span></span>
+                  </div>
+                </div>
+              </article>
+              <!-- ③ 累计舒展天数 -->
+              <article class="game-panel mech-card">
+                <h4>累计舒展天数 · 断了不清零</h4>
+                <p class="m-sub">不玩连续打卡焦虑：中断只是暂停，进度永远在。</p>
+                <p class="streak-num">46<span class="unit"> 天 · 累计舒展</span></p>
+                <p style="margin-top: var(--space-4)"><span class="chip">「山谷等你回来 🐢」</span></p>
+              </article>
+              <!-- ④ 山峰成长线 -->
+              <article class="game-panel mech-card">
+                <h4>山峰成长线 · 水滴浇灌</h4>
+                <p class="m-sub">战利品水滴浇灌同一座山，从秃山一路长成雪峰。</p>
+                <div class="grow-line">
+                  <div class="grow-item">
+                    <div class="px-host">
+                      <div
+                        class="px"
+                        data-scale="3"
+                        data-palette="S=var(--px-bald);M=var(--px-bald);s=var(--px-shell-dark)"
+                        data-map="
+........MM........
+.......MMMM.......
+......MMMMMM......
+.....MMMMMMMM.....
+....MMMMMsMMMM....
+...MMMMMsMMMMMM...
+..MMMMMMMMMMMMMM..
+.MMMMMMMMMMMMMMMM.
+MMMMMMMMMMMMMMMMMM"
+                      ></div>
+                    </div>
+                    <span>秃山</span>
+                  </div>
+                  <div class="grow-arrow">
+                    <div class="grow-drops">
+                      <div class="px-host">
+                        <div
+                          class="px"
+                          data-scale="2"
+                          data-palette="W=var(--px-jelly)"
+                          data-map="
+.W.
+WWW
+WWW
+.W."
+                        ></div>
+                      </div>
+                      <div class="px-host">
+                        <div
+                          class="px"
+                          data-scale="2"
+                          data-palette="W=var(--px-jelly)"
+                          data-map="
+.W.
+WWW
+WWW
+.W."
+                        ></div>
+                      </div>
+                    </div>
+                    ▸▸
+                  </div>
+                  <div class="grow-item">
+                    <div class="px-host">
+                      <div
+                        class="px"
+                        data-scale="3"
+                        data-palette="S=var(--px-mountain-dark);M=var(--px-mountain);s=var(--px-mountain-dark)"
+                        data-map="
+........MM........
+.......MMMM.......
+......MMMMMM......
+.....MMMMMMMM.....
+....MMMMMsMMMM....
+...MMMMMsMMMMMM...
+..MMMMMMMMMMMMMM..
+.MMMMMMMMMMMMMMMM.
+MMMMMMMMMMMMMMMMMM"
+                      ></div>
+                    </div>
+                    <span>青山</span>
+                  </div>
+                  <div class="grow-arrow">
+                    <div class="grow-drops">
+                      <div class="px-host">
+                        <div
+                          class="px"
+                          data-scale="2"
+                          data-palette="W=var(--px-jelly)"
+                          data-map="
+.W.
+WWW
+WWW
+.W."
+                        ></div>
+                      </div>
+                      <div class="px-host">
+                        <div
+                          class="px"
+                          data-scale="2"
+                          data-palette="W=var(--px-jelly)"
+                          data-map="
+.W.
+WWW
+WWW
+.W."
+                        ></div>
+                      </div>
+                    </div>
+                    ▸▸
+                  </div>
+                  <div class="grow-item">
+                    <div class="px-host">
+                      <div
+                        class="px"
+                        data-scale="3"
+                        data-palette="S=var(--fg);M=var(--px-mountain);s=var(--px-mountain-dark)"
+                        data-map="
+........SS........
+.......SSSS.......
+......SSMMSS......
+.....SSMMMMSS.....
+....MMMMMsMMMM....
+...MMMMMsMMMMMM...
+..MMMMMMMMMMMMMM..
+.MMMMMMMMMMMMMMMM.
+MMMMMMMMMMMMMMMMMM"
+                      ></div>
+                    </div>
+                    <span>雪峰</span>
+                  </div>
+                </div>
+              </article>
+            </div>
+          </div>
+
+          <!-- 子区块 5 · 安全边界参数卡 -->
+          <div class="game-block">
+            <h3>SAFETY LIMITS</h3>
+            <p class="zh-name">安全边界参数 · 「安全边界硬编码，甩头不计分」</p>
+            <div class="term-card">
+              <div class="term-bar"><i></i><i></i><i></i></div>
+              <span class="tl"><span class="p">$</span> neckup --safety-limits <span class="c"># 硬编码，不开放设置项</span></span>
+              <span class="tl"><span class="k">MAX_FLEXION</span>   <span class="v">≤ 30°</span>   <span class="c"># 前屈</span></span>
+              <span class="tl"><span class="k">MAX_EXTENSION</span> <span class="v">≤ 20°</span>   <span class="c"># 后伸</span></span>
+              <span class="tl"><span class="k">MAX_ROTATION</span>  <span class="v">≤ 40°</span>   <span class="c"># 左右旋转</span></span>
+              <span class="tl"><span class="k">MAX_LATERAL</span>   <span class="v">≤ 30°</span>   <span class="c"># 侧屈</span></span>
+              <span class="tl"><span class="k">SHAKE_SPEED</span>   <span class="v">&gt; 60°/s</span> <span class="c"># 判甩头，不计分</span></span>
+              <span class="tl"><span class="k">SESSION_MAX</span>   <span class="v">≤ 90s</span>   <span class="c"># 单局时长上限</span></span>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============ 设计规范区 ============ -->
+        <section data-od-id="spec">
+          <div class="sec-head">
+            <p class="eyebrow">Stage 05 · Spec</p>
+            <h2>设计规范<span class="en">TOKENS</span></h2>
+            <p class="sub">全部色值、字体、间距来自 pacman 设计系统 token，组件内不散落硬编码色值。</p>
+          </div>
+          <div class="spec-grid">
+            <div class="spec-panel" style="grid-column: 1 / -1">
+              <h3>零学习 ZERO-LEARNING</h3>
+              <p style="color: var(--fg-2); font-size: var(--text-sm); max-width: 720px">
+                不给数字，只给状态和建议；角度、阈值、评分是工程参数，不是用户界面语言。用户一眼要能看到三件事：<b style="color: var(--fg)">现在好不好、该怎么做、按哪里</b>。
+              </p>
+            </div>
+            <div class="spec-panel">
+              <h3>COLOR TOKENS</h3>
+              <div class="swatch-grid">
+                <div class="sw"><div class="c" style="background: var(--bg)"></div><div class="meta"><b>--bg</b><span>#050505</span></div></div>
+                <div class="sw"><div class="c" style="background: var(--surface)"></div><div class="meta"><b>--surface</b><span>#101014</span></div></div>
+                <div class="sw"><div class="c" style="background: var(--surface-warm)"></div><div class="meta"><b>--surface-warm</b><span>#1F1B08</span></div></div>
+                <div class="sw"><div class="c" style="background: var(--fg)"></div><div class="meta"><b>--fg</b><span>#FFF7D6</span></div></div>
+                <div class="sw"><div class="c" style="background: var(--muted)"></div><div class="meta"><b>--muted</b><span>#B9A85D</span></div></div>
+                <div class="sw"><div class="c" style="background: var(--accent)"></div><div class="meta"><b>--accent</b><span>#FFCC00</span></div></div>
+                <div class="sw"><div class="c" style="background: var(--border)"></div><div class="meta"><b>--border</b><span>#2338FF</span></div></div>
+                <div class="sw"><div class="c" style="background: var(--border-soft)"></div><div class="meta"><b>--border-soft</b><span>#17218A</span></div></div>
+                <div class="sw"><div class="c" style="background: var(--success)"></div><div class="meta"><b>--success</b><span>#00FF66</span></div></div>
+                <div class="sw"><div class="c" style="background: var(--warn)"></div><div class="meta"><b>--warn</b><span>#FF9900</span></div></div>
+                <div class="sw"><div class="c" style="background: var(--danger)"></div><div class="meta"><b>--danger</b><span>#FF3B3B</span></div></div>
+                <div class="sw"><div class="c" style="background: var(--reminder-warm)"></div><div class="meta"><b>--reminder-warm</b><span>#FFD873</span></div></div>
+              </div>
+            </div>
+            <div class="spec-panel">
+              <h3>TYPOGRAPHY</h3>
+              <div class="type-sample">
+                <p class="lbl">Display · Press Start 2P（标题）</p>
+                <p class="t-display">NECKUP</p>
+              </div>
+              <div class="type-sample">
+                <p class="lbl">Mono · Press Start 2P（番茄钟倒计时）</p>
+                <p class="t-mono">25:00</p>
+              </div>
+              <div class="type-sample">
+                <p class="lbl">Body · Inter / 系统中文（正文）</p>
+                <p class="t-body">工作时它安静地待在刘海里；你一低头，它就轻轻提醒你。</p>
+              </div>
+            </div>
+            <div class="spec-panel">
+              <h3>SPACING · 8PT GRID</h3>
+              <div class="space-row"><span>--space-1</span><div class="bar" style="width: 4px"></div><span>4</span></div>
+              <div class="space-row"><span>--space-2</span><div class="bar" style="width: 8px"></div><span>8</span></div>
+              <div class="space-row"><span>--space-3</span><div class="bar" style="width: 12px"></div><span>12</span></div>
+              <div class="space-row"><span>--space-4</span><div class="bar" style="width: 16px"></div><span>16</span></div>
+              <div class="space-row"><span>--space-6</span><div class="bar" style="width: 24px"></div><span>24</span></div>
+              <div class="space-row"><span>--space-8</span><div class="bar" style="width: 32px"></div><span>32</span></div>
+              <div class="space-row"><span>--space-12</span><div class="bar" style="width: 48px"></div><span>48</span></div>
+            </div>
+            <div class="spec-panel">
+              <h3>RADIUS & SHADOW</h3>
+              <div class="radius-row">
+                <div class="radius-box" style="border-radius: var(--radius-sm)">sm 10</div>
+                <div class="radius-box" style="border-radius: var(--radius-md)">md 18</div>
+                <div class="radius-box" style="border-radius: var(--radius-pill); width: 96px">pill ∞</div>
+              </div>
+              <p style="margin-top: var(--space-4); color: var(--muted); font-size: var(--text-xs)">
+                阴影只用硬投影：3px 3px 0 实色偏移，不用柔和弥散阴影；描边 1px 实线或虚线（dashed）。动效 90–160ms，cubic-bezier(0.2, 0, 0, 1)。
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <footer>
+          <span>NeckUp · 设计评审稿 v1 · 2026-08-07 · 文案取自 SwiftUI 实现</span>
+          <span class="en">PACMAN DESIGN SYSTEM · PRESS START 2P</span>
+        </footer>
+      </div>
+    </main>
+
+    <script>
+      // 盒阴影像素画法：把字符画渲染成 box-shadow 像素
+      document.querySelectorAll(".px").forEach((el) => {
+        const rows = el.dataset.map
+          .trim()
+          .split("\n")
+          .map((r) => r.trim());
+        const pal = {};
+        el.dataset.palette.split(";").forEach((pair) => {
+          const [k, v] = pair.split("=");
+          if (k && v) pal[k.trim()] = v.trim();
+        });
+        const scale = parseInt(el.dataset.scale || "6", 10);
+        const shadows = [];
+        rows.forEach((row, y) => {
+          [...row].forEach((ch, x) => {
+            if (pal[ch]) shadows.push(`${x * scale}px ${y * scale}px 0 0 ${pal[ch]}`);
+          });
+        });
+        el.style.width = scale + "px";
+        el.style.height = scale + "px";
+        el.style.boxShadow = shadows.join(",");
+        const host = el.closest(".px-host") || el.parentElement;
+        if (el.closest(".px-host")) {
+          host.style.width = rows[0].length * scale + "px";
+          host.style.height = rows.length * scale + "px";
+        }
+      });
+    </script>
+  </body>
+</html>
