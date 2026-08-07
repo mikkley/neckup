@@ -1,15 +1,17 @@
 import Foundation
 import NeckUpCore
 
-/// 图鉴与对局记录：每怪累计击败数（→星级）+ GameSession 历史，JSON 落盘 game.json（模式参照 StatsStore）
+/// 图鉴与对局记录：每怪累计击败数（→星级）+ GameSession 历史 + 山峰成长，JSON 落盘 game.json（模式参照 StatsStore）
 @MainActor
 final class CodexStore: ObservableObject {
     @Published private(set) var defeats: [MonsterType: Int]
+    @Published private(set) var mountain: MountainState
     private var sessions: [GameSession]
 
     private struct Payload: Codable {
         var defeats: [String: Int]      // MonsterType.rawValue → 击败数
         var sessions: [GameSession]
+        var mountain: MountainState? = nil   // 旧档无此字段，缺省为秃山
     }
 
     private static var storeURL: URL {
@@ -25,6 +27,7 @@ final class CodexStore: ObservableObject {
             MonsterType(rawValue: key).map { ($0, count) }
         })
         sessions = payload.sessions
+        mountain = payload.mountain ?? MountainState()
     }
 
     /// 累计击败数 → 星级（1/10/30 点亮，设计文档 §5.2）
@@ -36,17 +39,31 @@ final class CodexStore: ObservableObject {
         return 0
     }
 
-    /// 一局结算：图鉴计数 +1，对局历史落盘
+    /// 一局结算：图鉴计数 +1，水滴浇灌山峰，对局历史落盘
     func record(session: GameSession) {
         defeats[session.monster, default: 0] += 1
+        mountain.addDroplets(session.droplets, at: Date())
         sessions.append(session)
         save()
+    }
+
+    /// 佛系模式开关（关闭山峰枯萎）
+    func setZenMode(_ on: Bool) {
+        guard mountain.zenMode != on else { return }
+        mountain.zenMode = on
+        save()
+    }
+
+    /// 启动时每日检查：连续 3 天无活动山峰枯萎一档
+    func dailyCheck() {
+        if mountain.dailyCheck(at: Date()) { save() }
     }
 
     private func save() {
         let payload = Payload(
             defeats: Dictionary(uniqueKeysWithValues: defeats.map { ($0.key.rawValue, $0.value) }),
-            sessions: sessions
+            sessions: sessions,
+            mountain: mountain
         )
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601

@@ -32,6 +32,7 @@ struct SettingsView: View {
             }
             Section("休息段微游戏") {
                 Toggle("番茄休息时打怪舒展", isOn: $settings.gameEnabled)
+                Toggle("佛系模式（山峰不枯萎）", isOn: $settings.zenMode)
                 Text("休息 5 分钟里，用缓慢的颈部动作打跑僵硬怪；可随时关闭。")
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -45,6 +46,6 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .frame(width: 400, height: 320)
+        .frame(width: 420, height: 360)
     }
 }

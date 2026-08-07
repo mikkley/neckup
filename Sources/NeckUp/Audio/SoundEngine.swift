@@ -18,6 +18,13 @@ final class SoundEngine {
         buffers["confirm"] = Self.makeConfirm(format: format)
         buffers["thud"] = Self.makeThud(format: format)
         buffers["victory"] = Self.makeVictory(format: format)
+        buffers["block"] = Self.makeBlock(format: format)
+        buffers["gem"] = Self.makeGem(format: format)
+        buffers["burst"] = Self.makeBurst(format: format)
+        buffers["blast"] = Self.makeQiBlast(format: format)
+        buffers["lock"] = Self.makeLock(format: format)
+        buffers["arrow"] = Self.makeArrow(format: format)
+        buffers["fall"] = Self.makeFall(format: format)
         for level in 1...RatchetTracker.slots.count {
             buffers["ratchet\(level)"] = Self.makeRatchet(level: level, format: format)
         }
@@ -44,6 +51,71 @@ final class SoundEngine {
 
     /// 一局胜利：上行琶音（<800ms）
     func playVictory() { play(buffers["victory"]) }
+
+    /// M2 格挡：金属闷响「铛」
+    func playBlock() { play(buffers["block"]) }
+
+    /// M3 接宝石：清亮「叮」
+    func playGem() { play(buffers["gem"]) }
+
+    /// M3 大宝石定住迸发：快速上行琶音
+    func playBurst() { play(buffers["burst"]) }
+
+    /// M4 气功波发射：短促爆发音
+    func playQiBlast() { play(buffers["blast"]) }
+
+    /// M5 瞄准锁定：锁链咔哒（双击）
+    func playLock() { play(buffers["lock"]) }
+
+    /// M5 放箭：弦响
+    func playArrow() { play(buffers["arrow"]) }
+
+    /// M5 蝙蝠坠落：下行滑音（音高下降=下落）
+    func playFall() { play(buffers["fall"]) }
+
+    // MARK: 连续 sonification（M3/M4 蓄力音，设计文档 §6.2/§6.3）
+
+    private var chargeNode: AVAudioPlayerNode?
+    private var chargeLevel = -1.0
+
+    /// 蓄力进度更新（0~1）：惰性启动循环音，rate 随进度上行（音高 0.8x→1.7x）；
+    /// 变化 ≥2% 才调 rate（10Hz 级节流，避免爆音）
+    func updateCharge(progress: Double) {
+        guard settings.soundEnabled else { return }
+        let p = min(max(progress, 0), 1)
+        if chargeNode == nil { startChargeNode() }
+        guard let node = chargeNode, abs(p - chargeLevel) >= 0.02 else { return }
+        chargeLevel = p
+        node.rate = Float(0.8 + p * 0.9)
+    }
+
+    /// 蓄力中止/结束：停掉循环音并摘除节点
+    func stopCharge() {
+        guard let node = chargeNode else { return }
+        node.stop()
+        engine.detach(node)
+        chargeNode = nil
+        chargeLevel = -1
+    }
+
+    private func startChargeNode() {
+        let node = AVAudioPlayerNode()
+        engine.attach(node)
+        engine.connect(node, to: engine.mainMixerNode, format: format)
+        if !engine.isRunning { try? engine.start() }
+        guard engine.isRunning else {
+            engine.detach(node)
+            return
+        }
+        node.volume = 0.16
+        if let loop = Self.makeChargeLoop(format: format) {
+            node.scheduleBuffer(loop, at: nil, options: .loops)
+        }
+        node.rate = 0.8
+        node.play()
+        chargeNode = node
+        chargeLevel = 0
+    }
 
     /// 每个事件一个独立 player node，避免互相打断；播完自动摘除
     private func play(_ buffer: AVAudioPCMBuffer?) {
@@ -135,6 +207,75 @@ extension SoundEngine {
             let idx = min(Int(t / 0.15), notes.count - 1)
             let local = t - Double(idx) * 0.15
             return 0.32 * exp(-local * 8) * square(notes[idx], local)
+        }
+    }
+
+    /// M2 格挡「铛」：不谐和双音（金属感）+ 起始噪声快衰减
+    private static func makeBlock(format: AVAudioFormat) -> AVAudioPCMBuffer? {
+        render(0.22, format: format) { t in
+            let metal = 0.2 * square(1567, t) + 0.12 * square(2217, t)
+            let click = t < 0.01 ? 0.2 * noise() : 0
+            return (metal + click) * exp(-t * 22)
+        }
+    }
+
+    /// M3 接宝石「叮」：清亮高频正弦 + 泛音，余音稍长
+    private static func makeGem(format: AVAudioFormat) -> AVAudioPCMBuffer? {
+        render(0.3, format: format) { t in
+            (0.28 * sin(2 * .pi * 1318 * t) + 0.1 * sin(2 * .pi * 2636 * t)) * exp(-t * 10)
+        }
+    }
+
+    /// M3 大宝石迸发：五音快速上行琶音
+    private static func makeBurst(format: AVAudioFormat) -> AVAudioPCMBuffer? {
+        let notes = [523.25, 659.25, 783.99, 1046.5, 1318.5]
+        return render(0.5, format: format) { t in
+            let idx = min(Int(t / 0.08), notes.count - 1)
+            let local = t - Double(idx) * 0.08
+            return 0.3 * exp(-local * 10) * square(notes[idx], local)
+        }
+    }
+
+    /// M4 气功波发射：上行扫频方波 + 噪声爆发
+    private static func makeQiBlast(format: AVAudioFormat) -> AVAudioPCMBuffer? {
+        render(0.4, format: format) { t in
+            let freq = 220 * pow(4, t / 0.4)   // 220→880 指数扫频
+            let sweep = 0.26 * square(freq, t) * exp(-t * 5)
+            let puff = t < 0.06 ? 0.18 * noise() * exp(-t * 40) : 0
+            return sweep + puff
+        }
+    }
+
+    /// M5 锁定：锁链咔哒双击
+    private static func makeLock(format: AVAudioFormat) -> AVAudioPCMBuffer? {
+        render(0.12, format: format) { t in
+            let local = t < 0.07 ? t : t - 0.07
+            guard local < 0.03 else { return 0 }
+            return 0.3 * exp(-local * 90) * (square(1800, local) * 0.6 + noise() * 0.4)
+        }
+    }
+
+    /// M5 放箭：弦响（快速衰减弹拨）
+    private static func makeArrow(format: AVAudioFormat) -> AVAudioPCMBuffer? {
+        render(0.18, format: format) { t in
+            let pluck = 0.3 * square(392, t) * exp(-t * 30)
+            let snap = t < 0.015 ? 0.15 * noise() * exp(-t * 80) : 0
+            return pluck + snap
+        }
+    }
+
+    /// M5 蝙蝠坠落：下行滑音（900→180 指数下滑）
+    private static func makeFall(format: AVAudioFormat) -> AVAudioPCMBuffer? {
+        render(0.45, format: format) { t in
+            let freq = 900 * pow(0.2, t / 0.45)
+            return 0.24 * sin(2 * .pi * freq * t) * exp(-t * 4)
+        }
+    }
+
+    /// 蓄力循环音：220Hz 正弦 + 三次泛音，0.5s 整 110 周期无缝循环；rate 变调驱动音高上行
+    private static func makeChargeLoop(format: AVAudioFormat) -> AVAudioPCMBuffer? {
+        render(0.5, format: format) { t in
+            0.7 * sin(2 * .pi * 220 * t) + 0.3 * sin(2 * .pi * 660 * t)
         }
     }
 }

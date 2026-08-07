@@ -20,8 +20,8 @@ final class AppState: ObservableObject {
     let codex: CodexStore
     let sound: SoundEngine
 
-    /// 游戏渲染快照（GameContainerView 只读；nil 表示无对局）
-    @Published private(set) var gameSnapshot: SlimeAxeGame.Snapshot?
+    /// 游戏渲染视图状态（GameContainerView 只读；nil 表示无对局）
+    @Published private(set) var gameViewState: GameViewState?
     /// 首次进入游戏的一次性安全提示（设计文档 §7）
     @Published private(set) var safetyHint: String?
 
@@ -31,7 +31,8 @@ final class AppState: ObservableObject {
     private var isLockedExpanded = false
     private var hoverTask: Task<Void, Never>?
     private var deck = EncounterDeck()
-    private var game: SlimeAxeGame?
+    private var game: ActiveGame?
+    private var mock: MockMotionProvider?
     private var gameLoopTask: Task<Void, Never>?
     private var cancellables: Set<AnyCancellable> = []
 
@@ -42,11 +43,23 @@ final class AppState: ObservableObject {
         self.codex = CodexStore()
         self.sound = SoundEngine(settings: settings)
         // 无 AirPods 开发调试：--mock 参数或设置开关 → 慢速点头模拟
-        let provider: MotionProvider = AppSettings.mockRequested
-            ? MockMotionProvider()
-            : HeadphoneMotionProvider()
+        let provider: MotionProvider
+        if AppSettings.mockRequested {
+            let m = MockMotionProvider()
+            provider = m
+            mock = m
+        } else {
+            provider = HeadphoneMotionProvider()
+        }
         self.monitor = PostureMonitor(provider: provider, settings: settings)
         self.pomodoro = PomodoroTimer()
+
+        // 山峰：启动时检查枯萎（佛系模式跳过），佛系开关同步进山
+        codex.setZenMode(settings.zenMode)
+        codex.dailyCheck()
+        settings.$zenMode.dropFirst().sink { [weak self] on in
+            self?.codex.setZenMode(on)
+        }.store(in: &cancellables)
 
         // 每秒姿势样本 → 统计
         monitor.onSample = { [weak stats] pitch, isBad in
@@ -100,13 +113,14 @@ final class AppState: ObservableObject {
         monitor.start()
     }
 
-    // MARK: 游戏编排（M1 石斧史莱姆，本期池里只有 M1 启用）
+    // MARK: 游戏编排（洗牌式遭遇，五只怪轮换，设计文档 §5.1）
 
     private func startGame() {
         guard game == nil else { return }
         let monster = deck.draw()
-        game = SlimeAxeGame(monster: monster, startAt: Date())
-        gameSnapshot = nil
+        game = ActiveGame(monster: monster, startAt: Date())
+        mock?.setMonster(monster)   // mock 波形切到当前怪的轴（无 AirPods 预览）
+        gameViewState = nil
         islandState = .game
         // 首次进入展示一次性安全提示（设计文档 §7）
         if !UserDefaults.standard.bool(forKey: "gameSafetyHintShown") {
@@ -131,8 +145,10 @@ final class AppState: ObservableObject {
         gameLoopTask?.cancel()
         gameLoopTask = nil
         game = nil
-        gameSnapshot = nil
+        gameViewState = nil
         safetyHint = nil
+        mock?.setMonster(nil)
+        sound.stopCharge()
         if islandState == .game { islandState = .collapsed }
         monitor.setHighFrequency(pomodoro.phase == .focus)
     }
@@ -142,31 +158,61 @@ final class AppState: ObservableObject {
         let now = Date()
         let events = g.update(pose: pose, at: now)
         game = g
-        gameSnapshot = g.snapshot(at: now)
+        gameViewState = g.viewState(at: now)
         handleGameEvents(events)
+        syncChargeSound()
     }
 
     private func gameTick(at now: Date) {
         guard var g = game else { return }
         let events = g.tick(at: now)
         game = g
-        gameSnapshot = g.snapshot(at: now)
+        gameViewState = g.viewState(at: now)
         handleGameEvents(events)
+        syncChargeSound()
     }
 
-    private func handleGameEvents(_ events: [SlimeAxeGame.Event]) {
+    /// M3/M4 蓄力 sonification：有进度驱动蓄力音，无进度即停
+    private func syncChargeSound() {
+        if let p = game?.chargeProgress {
+            sound.updateCharge(progress: p)
+        } else {
+            sound.stopCharge()
+        }
+    }
+
+    private func handleGameEvents(_ events: [GameFX]) {
         for event in events {
             switch event {
-            case .ratchetClick(let level):
+            case .ratchet(let level):
                 sound.playRatchet(level: level)
-            case .chopHit(let combo):
+            case .chop(let combo):
                 sound.playConfirm()
-                if combo >= 2 { sound.playCombo(combo) }
-            case .tooFast:
+                comboSound(combo)
+            case .block(let combo):
+                sound.playBlock()
+                comboSound(combo)
+            case .gem(let combo):
+                sound.playGem()
+                comboSound(combo)
+            case .burst(let combo):
+                sound.playBurst()
+                comboSound(combo)
+            case .blast(let combo):
+                sound.playQiBlast()
+                comboSound(combo)
+            case .lockOn:
+                sound.playLock()
+            case .arrow(let combo):
+                sound.playArrow()
+                sound.playFall()
+                comboSound(combo)
+            case .thud:
                 sound.playThud()
             case .idleHint:
                 break   // 温和提示，无音效
-            case .finished(let session):
+            case .victory(let session):
+                sound.stopCharge()
                 sound.playVictory()
                 codex.record(session: session)
                 // 结算页停留 5s 后自动收回
@@ -177,6 +223,11 @@ final class AppState: ObservableObject {
                 }
             }
         }
+    }
+
+    /// combo ≥ 2 起播五声音阶递增音
+    private func comboSound(_ combo: Int) {
+        if combo >= 2 { sound.playCombo(combo) }
     }
 
     // MARK: 岛交互

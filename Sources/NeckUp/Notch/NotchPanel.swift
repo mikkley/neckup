@@ -42,6 +42,7 @@ final class NotchPanelManager {
             .environmentObject(state.monitor)
             .environmentObject(state.pomodoro)
             .environmentObject(state.stats)
+            .environmentObject(state.codex)
             .environmentObject(state.settings)
         panel.contentView = NSHostingView(rootView: root)
         panel.orderFrontRegardless()
@@ -66,9 +67,9 @@ final class NotchPanelManager {
         let collapsed = g.collapsedSize
         let size: NSSize = switch island {
         case .expanded:
-            NSSize(width: max(collapsed.width, 360), height: collapsed.height + 150)
+            NSSize(width: max(collapsed.width, 360), height: collapsed.height + 192)
         case .game:
-            NSSize(width: max(collapsed.width, 360), height: collapsed.height + 280)
+            NSSize(width: max(collapsed.width, 360), height: collapsed.height + 292)
         case .collapsed, .reminder:
             collapsed
         }

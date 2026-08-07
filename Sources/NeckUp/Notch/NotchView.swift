@@ -1,3 +1,4 @@
+import NeckUpCore
 import SwiftUI
 
 /// 岛内容：收缩 / 展开 / 提醒 三态
@@ -6,6 +7,7 @@ struct NotchView: View {
     @EnvironmentObject var monitor: PostureMonitor
     @EnvironmentObject var pomodoro: PomodoroTimer
     @EnvironmentObject var stats: StatsStore
+    @EnvironmentObject var codex: CodexStore
 
     @State private var breathing = false
     @State private var pulsing = false
@@ -35,15 +37,15 @@ struct NotchView: View {
     // MARK: 收缩态（也是提醒态的载体）
 
     private var collapsedRow: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: 8) {
             statusDot
             if appState.islandState == .reminder {
                 Text(monitor.reminderText)
-                    .font(.system(size: 12, weight: .semibold, design: .rounded))
+                    .font(.system(.callout, design: .rounded).weight(.semibold))
                     .foregroundStyle(.black.opacity(0.85))
             } else if !trailingText.isEmpty {
                 Text(trailingText)
-                    .font(.system(size: 11, weight: .medium, design: .rounded))
+                    .font(.system(.footnote, design: .rounded).weight(.medium))
                     .foregroundStyle(.white.opacity(0.9))
             }
         }
@@ -76,7 +78,7 @@ struct NotchView: View {
         return ""
     }
 
-    // MARK: 展开态卡片（~140pt 玻璃拟态）
+    // MARK: 展开态卡片（~180pt 玻璃拟态）
 
     private var expandedCard: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -87,13 +89,13 @@ struct NotchView: View {
                 Text(dayStatusWord)
                     .foregroundStyle(dayStatusColor)
             }
-            .font(.system(size: 12, weight: .medium))
+            .font(.callout)
 
             postureIndicator
 
             // 一句人话总结；详细数字在菜单栏「今日统计」里
             Text(daySummarySentence)
-                .font(.system(size: 11))
+                .font(.footnote)
                 .foregroundStyle(.secondary)
 
             HStack(spacing: 8) {
@@ -102,19 +104,41 @@ struct NotchView: View {
                 Button(monitor.isMonitoring ? "暂停监测" : "继续监测") {
                     monitor.isMonitoring.toggle()
                 }
+                .buttonStyle(.bordered)
                 Button("坐直校准") { monitor.recalibrate() }
+                    .buttonStyle(.bordered)
             }
             .controlSize(.small)
+
+            growthRow
 
             if monitor.permissionDenied {
                 permissionGuide
             }
         }
-        .padding(10)
-        .frame(height: 140)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 14))
+        .padding(12)
+        .frame(height: 180)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
         .padding(.horizontal, 8)
         .padding(.top, 4)
+    }
+
+    /// 成长行（G-3）：像素山峰当前档 + 水滴数 + 五怪星级 mini（1/10/30 击败 → 1/2/3 星）
+    private var growthRow: some View {
+        HStack(spacing: 12) {
+            MountainPixel(stage: codex.mountain.stage)
+                .frame(width: 24, height: 16)
+            Text(codex.mountain.stage.displayName)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            Text("水滴 \(codex.mountain.droplets)")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            Spacer()
+            ForEach(MonsterType.allCases, id: \.self) { monster in
+                MonsterStarsMini(monster: monster, stars: codex.stars(for: monster))
+            }
+        }
     }
 
     /// 当前姿势状态 → 直接告诉用户好不好、该怎么做
@@ -164,7 +188,7 @@ struct NotchView: View {
 
     /// 迷你姿态指示器：小球随俯仰角上下移动（水平仪隐喻，零学习）
     private var postureIndicator: some View {
-        VStack(spacing: 3) {
+        VStack(spacing: 4) {
             ZStack {
                 Capsule().fill(.white.opacity(0.12))
                 Circle()
@@ -173,9 +197,9 @@ struct NotchView: View {
                     .offset(y: CGFloat(max(-1, min(1, monitor.pitchDeg / 30))) * 7)
                     .animation(.easeOut(duration: 0.2), value: monitor.pitchDeg)
             }
-            .frame(height: 18)
+            .frame(height: 20)
             Text("小球跟着你的头走，居中就是坐直了")
-                .font(.system(size: 9))
+                .font(.caption2)
                 .foregroundStyle(.tertiary)
         }
     }
@@ -185,12 +209,15 @@ struct NotchView: View {
         switch pomodoro.phase {
         case .idle:
             Button("开始番茄 25:00") { pomodoro.start() }
+                .buttonStyle(.borderedProminent)
         case .focus, .rest:
             HStack(spacing: 8) {
                 Text(pomodoro.phase == .focus ? "专注 \(pomodoro.displayString)" : "休息 \(pomodoro.displayString)")
-                    .font(.system(size: 12, weight: .medium, design: .monospaced))
+                    .font(.system(.callout, design: .monospaced).weight(.medium))
                 Button(pomodoro.isPaused ? "继续" : "暂停") { pomodoro.togglePause() }
+                    .buttonStyle(.bordered)
                 Button("重置") { pomodoro.reset() }
+                    .buttonStyle(.bordered)
             }
         }
     }
@@ -199,13 +226,14 @@ struct NotchView: View {
     private var permissionGuide: some View {
         HStack(spacing: 8) {
             Text("需要「运动与健身」权限才能读取 AirPods 数据")
-                .font(.system(size: 11))
+                .font(.footnote)
                 .foregroundStyle(.orange)
             Button("打开系统设置") {
                 if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Motion") {
                     NSWorkspace.shared.open(url)
                 }
             }
+            .buttonStyle(.bordered)
             .controlSize(.small)
         }
     }
@@ -223,5 +251,60 @@ struct NotchView: View {
             UnevenRoundedRectangle(bottomLeadingRadius: 12, bottomTrailingRadius: 12)
                 .fill(Color.black.opacity(0.82))
         }
+    }
+}
+
+// MARK: - 成长行子组件
+
+/// 像素山峰 mini（6×4 像素格）：秃山灰 → 青山绿 → 雪峰白顶
+private struct MountainPixel: View {
+    let stage: MountainState.Stage
+
+    var body: some View {
+        Canvas { ctx, size in
+            let px = size.width / 6
+            let py = size.height / 4
+            // 山体三角（从底到顶每行内收一格）
+            let rows: [[Int]] = [[0, 5], [1, 4], [2, 3], [2, 3]]
+            let bodyColor: Color = switch stage {
+            case .barren: Color(red: 0.5, green: 0.48, blue: 0.45)
+            case .green, .snowPeak: Color(red: 0.35, green: 0.75, blue: 0.42)
+            }
+            for (r, cols) in rows.enumerated() {
+                for c in cols[0] ... cols[1] {
+                    ctx.fill(Path(CGRect(x: CGFloat(c) * px, y: CGFloat(r) * py, width: px, height: py)),
+                             with: .color(bodyColor))
+                }
+            }
+            // 雪峰：顶两格盖雪
+            if stage == .snowPeak {
+                for c in 2 ... 3 {
+                    ctx.fill(Path(CGRect(x: CGFloat(c) * px, y: 0, width: px, height: py * 2)),
+                             with: .color(.white))
+                }
+            }
+        }
+    }
+}
+
+/// 单怪星级 mini：主题色小方块 + 3 个星点（点亮数 = 星级）
+private struct MonsterStarsMini: View {
+    let monster: MonsterType
+    let stars: Int
+
+    var body: some View {
+        HStack(spacing: 4) {
+            RoundedRectangle(cornerRadius: 1, style: .continuous)
+                .fill(stars > 0 ? monster.themeColor : monster.themeColor.opacity(0.3))
+                .frame(width: 6, height: 6)
+            HStack(spacing: 2) {
+                ForEach(0 ..< 3, id: \.self) { i in
+                    Circle()
+                        .fill(i < stars ? Color.yellow : Color.white.opacity(0.2))
+                        .frame(width: 3, height: 3)
+                }
+            }
+        }
+        .help(monster.displayName)
     }
 }
