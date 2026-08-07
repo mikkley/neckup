@@ -37,7 +37,7 @@ struct NotchView: View {
                 Text(monitor.reminderText)
                     .font(.system(size: 12, weight: .semibold, design: .rounded))
                     .foregroundStyle(.black.opacity(0.85))
-            } else {
+            } else if !trailingText.isEmpty {
                 Text(trailingText)
                     .font(.system(size: 11, weight: .medium, design: .rounded))
                     .foregroundStyle(.white.opacity(0.9))
@@ -64,12 +64,12 @@ struct NotchView: View {
         }
     }
 
-    /// 收缩态右侧：番茄倒计时 > 未佩戴 > 坐姿评分
+    /// 收缩态右侧：番茄倒计时 > 已暂停 > 未佩戴；平时只留呼吸圆点，不给数字
     private var trailingText: String {
         if pomodoro.phase != .idle { return pomodoro.displayString }
         if !monitor.isMonitoring { return "已暂停" }
         if !monitor.isWearing { return "未佩戴" }
-        return "\(stats.today.score)"
+        return ""
     }
 
     // MARK: 展开态卡片（~140pt 玻璃拟态）
@@ -77,15 +77,18 @@ struct NotchView: View {
     private var expandedCard: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text("头部俯仰 \(Int(monitor.pitchDeg))°")
+                // 零学习：只给状态和建议，不显示角度数值
+                Text(statusSentence)
                 Spacer()
-                Text("今日评分 \(stats.today.score)%")
+                Text(dayStatusWord)
+                    .foregroundStyle(dayStatusColor)
             }
             .font(.system(size: 12, weight: .medium))
 
             postureIndicator
 
-            Text("良好 \(Int(stats.today.goodPostureSec / 60)) 分钟 · 低头 \(stats.today.slouchEvents) 次 · 专注 \(Int(stats.today.focusSec / 60)) 分钟")
+            // 一句人话总结；详细数字在菜单栏「今日统计」里
+            Text(daySummarySentence)
                 .font(.system(size: 11))
                 .foregroundStyle(.secondary)
 
@@ -95,7 +98,7 @@ struct NotchView: View {
                 Button(monitor.isMonitoring ? "暂停监测" : "继续监测") {
                     monitor.isMonitoring.toggle()
                 }
-                Button("重新校准") { monitor.recalibrate() }
+                Button("坐直校准") { monitor.recalibrate() }
             }
             .controlSize(.small)
 
@@ -110,17 +113,67 @@ struct NotchView: View {
         .padding(.top, 4)
     }
 
-    /// 迷你姿态指示器：小球随俯仰角上下移动
-    private var postureIndicator: some View {
-        ZStack {
-            Capsule().fill(.white.opacity(0.12))
-            Circle()
-                .fill(dotColor)
-                .frame(width: 10, height: 10)
-                .offset(y: CGFloat(max(-1, min(1, monitor.pitchDeg / 30))) * 6)
-                .animation(.easeOut(duration: 0.2), value: monitor.pitchDeg)
+    /// 当前姿势状态 → 直接告诉用户好不好、该怎么做
+    private var statusSentence: String {
+        guard monitor.isMonitoring else { return "监测已暂停" }
+        guard monitor.isWearing else { return "戴上 AirPods 开始守护" }
+        switch monitor.status {
+        case .good: return "姿势不错，继续保持"
+        case .borderline: return "有点低头，抬一点"
+        case .bad: return "低头太久了，抬一点 🐢"
+        case .idle: return ""
         }
-        .frame(height: 16)
+    }
+
+    /// 今日评分 → 三档状态词
+    private var dayStatusWord: String {
+        if !hasDataToday { return "还没开始记录" }
+        switch stats.today.score {
+        case 80...: return "今天很棒"
+        case 60...: return "今天还行"
+        default: return "要注意了"
+        }
+    }
+
+    private var dayStatusColor: Color {
+        guard hasDataToday else { return .secondary }
+        switch stats.today.score {
+        case 80...: return .green
+        case 60...: return .yellow
+        default: return .red
+        }
+    }
+
+    /// 一句人话的今日总结，不给数字
+    private var daySummarySentence: String {
+        if !hasDataToday { return "今天的记录会显示在这里" }
+        switch stats.today.score {
+        case 80...: return "今天状态很棒，继续保持"
+        case 60...: return "今天还不错，记得偶尔抬头"
+        default: return "今天低头有点多，多抬头休息"
+        }
+    }
+
+    private var hasDataToday: Bool {
+        stats.today.goodPostureSec + stats.today.badPostureSec > 0
+    }
+
+    /// 迷你姿态指示器：小球随俯仰角上下移动（水平仪隐喻，零学习）
+    private var postureIndicator: some View {
+        VStack(spacing: 3) {
+            ZStack {
+                Capsule().fill(.white.opacity(0.12))
+                Circle()
+                    .fill(dotColor)
+                    .frame(width: 12, height: 12)
+                    .offset(y: CGFloat(max(-1, min(1, monitor.pitchDeg / 30))) * 7)
+                    .animation(.easeOut(duration: 0.2), value: monitor.pitchDeg)
+            }
+            .frame(height: 18)
+            Text("小球跟着你的头走，居中就是坐直了")
+                .font(.system(size: 9))
+                .foregroundStyle(.tertiary)
+        }
     }
 
     @ViewBuilder

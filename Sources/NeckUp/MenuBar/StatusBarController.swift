@@ -16,7 +16,7 @@ final class StatusBarController: NSObject {
         addItem("展开灵动岛", action: #selector(toggleIsland))
         addItem("暂停监测", action: #selector(toggleMonitoring))
         addItem("开始番茄钟", action: #selector(togglePomodoro))
-        addItem("重新校准", action: #selector(recalibrate))
+        addItem("坐直校准", action: #selector(recalibrate))
         menu.addItem(.separator())
         addItem("设置…", action: #selector(openSettings))
         addItem("退出 NeckUp", action: #selector(quit))
