@@ -2,7 +2,7 @@
 
 ## 项目简介
 
-macOS 灵动岛应用：用 AirPods 运动传感器（CMHeadphoneMotionManager，macOS 14+）监测头部俯仰角，低头提醒 + 25+5 番茄钟 + 坐姿统计。SwiftPM executable target，无 .xcodeproj。
+macOS 灵动岛应用：用 AirPods 运动传感器（CMHeadphoneMotionManager，macOS 14+）监测头部俯仰角，低头提醒 + 25+5 番茄钟 + 坐姿统计 + 休息段微游戏（G-1 M1 石斧史莱姆）。SwiftPM executable target，无 .xcodeproj；纯游戏逻辑在 NeckUpCore library target（Tests/NeckUpTests 单测）。
 
 ## 协作规则（用户明确要求）
 

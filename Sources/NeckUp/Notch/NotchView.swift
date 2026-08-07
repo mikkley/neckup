@@ -17,6 +17,10 @@ struct NotchView: View {
                 expandedCard
                     .transition(.opacity.combined(with: .move(edge: .top)))
             }
+            if appState.islandState == .game {
+                GameContainerView()
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(islandBackground)

@@ -64,9 +64,14 @@ final class NotchPanelManager {
     /// 顶部锚定：展开时向下生长，收缩时紧贴刘海/屏幕顶部
     static func frame(for island: AppState.IslandState, geometry g: NotchGeometry) -> NSRect {
         let collapsed = g.collapsedSize
-        let size: NSSize = island == .expanded
-            ? NSSize(width: max(collapsed.width, 360), height: collapsed.height + 150)
-            : collapsed
+        let size: NSSize = switch island {
+        case .expanded:
+            NSSize(width: max(collapsed.width, 360), height: collapsed.height + 150)
+        case .game:
+            NSSize(width: max(collapsed.width, 360), height: collapsed.height + 280)
+        case .collapsed, .reminder:
+            collapsed
+        }
         let x = g.screenFrame.midX - size.width / 2
         let y = g.screenFrame.maxY - size.height - (g.hasNotch ? 0 : 4)
         return NSRect(origin: NSPoint(x: x, y: y), size: size)

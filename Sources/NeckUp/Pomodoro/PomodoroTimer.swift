@@ -14,6 +14,11 @@ final class PomodoroTimer: ObservableObject {
     let focusMinutes = 25
     let restMinutes = 5
 
+    /// 调试：`--quick` 启动参数 → 10s 专注 + 90s 休息（验证休息段微游戏全流程用）
+    private static var quickMode: Bool { ProcessInfo.processInfo.arguments.contains("--quick") }
+    private var focusSeconds: Int { Self.quickMode ? 10 : focusMinutes * 60 }
+    private var restSeconds: Int { Self.quickMode ? 90 : restMinutes * 60 }
+
     /// 专注段结束回调：(startAt, endAt, 是否完整完成)
     var onFocusEnded: ((Date, Date, Bool) -> Void)?
     var onPhaseChange: ((Phase) -> Void)?
@@ -28,13 +33,13 @@ final class PomodoroTimer: ObservableObject {
     }
 
     init() {
-        remainingSec = focusMinutes * 60
+        remainingSec = Self.quickMode ? 10 : 25 * 60
     }
 
     func start() {
         stopTicker()
         phase = .focus
-        remainingSec = focusMinutes * 60
+        remainingSec = focusSeconds
         isPaused = false
         focusStart = Date()
         onPhaseChange?(phase)
@@ -55,7 +60,7 @@ final class PomodoroTimer: ObservableObject {
         stopTicker()
         phase = .idle
         isPaused = false
-        remainingSec = focusMinutes * 60
+        remainingSec = focusSeconds
         onPhaseChange?(phase)
     }
 
@@ -87,7 +92,7 @@ final class PomodoroTimer: ObservableObject {
             onFocusEnded?(focusStart ?? Date(), Date(), true)
             Notifier.send(title: "番茄钟完成 🎉", body: "专注 \(focusMinutes) 分钟结束，休息 5 分钟吧")
             phase = .rest
-            remainingSec = restMinutes * 60
+            remainingSec = restSeconds
             onPhaseChange?(phase)
         case .rest:
             Notifier.send(title: "休息结束", body: "可以开始下一个番茄钟了")

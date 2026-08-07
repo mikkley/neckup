@@ -30,6 +30,12 @@ struct SettingsView: View {
                 Toggle("启用低头提醒", isOn: $settings.remindersEnabled)
                 Toggle("通知提示音", isOn: $settings.soundEnabled)
             }
+            Section("休息段微游戏") {
+                Toggle("番茄休息时打怪舒展", isOn: $settings.gameEnabled)
+                Text("休息 5 分钟里，用缓慢的颈部动作打跑僵硬怪；可随时关闭。")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
             Section("传感器") {
                 Button("坐直后点此校准") { monitor.recalibrate() }
                 Toggle("使用模拟数据（无 AirPods 调试）", isOn: $settings.mockMode)

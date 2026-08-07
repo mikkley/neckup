@@ -1,4 +1,5 @@
 import Foundation
+import NeckUpCore
 
 /// 姿势监测：校准零点、1s 滑动平均、阈值判定、提醒降级
 @MainActor
@@ -24,10 +25,12 @@ final class PostureMonitor: ObservableObject {
     var onSlouch: (() -> Void)?
     /// 提醒态变化 → 驱动岛三态
     var onReminderChange: ((Bool) -> Void)?
+    /// 校准后、未平滑的原始姿态（25Hz）→ 游戏输入（游戏需要响应性，不走滑动平均）
+    var onRawPose: ((HeadPose) -> Void)?
 
     private let provider: MotionProvider
     private let settings: AppSettings
-    private var calibrationOffset: Double?
+    private var calibration: HeadPose?
     private var window: [Double] = []          // 1s 滑动窗口（25Hz ≈ 25 个样本）
     private var badSince: Date?
     private var goodSince: Date?
@@ -46,8 +49,8 @@ final class PostureMonitor: ObservableObject {
     init(provider: MotionProvider, settings: AppSettings) {
         self.provider = provider
         self.settings = settings
-        provider.onUpdate = { [weak self] pitch in
-            Task { @MainActor in self?.handle(raw: pitch) }
+        provider.onUpdate = { [weak self] pose in
+            Task { @MainActor in self?.handle(pose: pose) }
         }
         provider.onConnection = { [weak self] connected in
             Task { @MainActor in self?.handleConnection(connected) }
@@ -69,7 +72,7 @@ final class PostureMonitor: ObservableObject {
 
     /// 重新校准：以下一帧姿态为零点
     func recalibrate() {
-        calibrationOffset = nil
+        calibration = nil
         window.removeAll()
     }
 
@@ -99,11 +102,15 @@ final class PostureMonitor: ObservableObject {
         }
     }
 
-    private func handle(raw: Double) {
+    private func handle(pose: HeadPose) {
         if !isWearing { isWearing = true }   // 有数据流即视为佩戴中
-        if calibrationOffset == nil { calibrationOffset = raw }
-        let adjusted = raw - (calibrationOffset ?? 0)
-        window.append(adjusted)
+        if calibration == nil { calibration = pose }   // 首帧为零点（三轴各自校准）
+        let c = calibration ?? pose
+        let adjusted = HeadPose(pitch: pose.pitch - c.pitch,
+                                yaw: pose.yaw - c.yaw,
+                                roll: pose.roll - c.roll)
+        onRawPose?(adjusted)   // 校准后未平滑 → 游戏
+        window.append(adjusted.pitch)
         if window.count > 25 { window.removeFirst(window.count - 25) }
         pitchDeg = window.reduce(0, +) / Double(window.count)
         evaluate()

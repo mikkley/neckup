@@ -32,6 +32,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusBar = StatusBarController(state: state)
         panelManager = NotchPanelManager(state: state)
         state.start()
+        // --quick 调试：自动开始番茄钟，快速进入休息段验证游戏全流程
+        if ProcessInfo.processInfo.arguments.contains("--quick") { state.pomodoro.start() }
 
         // 系统通知授权（提醒降级 / 番茄钟结束用）
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }

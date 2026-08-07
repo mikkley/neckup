@@ -1,10 +1,11 @@
 import CoreMotion
 import Foundation
+import NeckUpCore
 
 /// 头部运动数据源抽象：真实 AirPods 或 Mock
 protocol MotionProvider: AnyObject, Sendable {
-    /// 原始俯仰角（度），回调线程不保证主线程
-    var onUpdate: (@Sendable (Double) -> Void)? { get set }
+    /// 原始头部姿态（度），回调线程不保证主线程
+    var onUpdate: (@Sendable (HeadPose) -> Void)? { get set }
     /// 佩戴状态变化
     var onConnection: (@Sendable (Bool) -> Void)? { get set }
     /// 授权被拒/受限
@@ -26,7 +27,7 @@ final class HeadphoneMotionProvider: NSObject, MotionProvider, CMHeadphoneMotion
         return q
     }()
 
-    var onUpdate: (@Sendable (Double) -> Void)?
+    var onUpdate: (@Sendable (HeadPose) -> Void)?
     var onConnection: (@Sendable (Bool) -> Void)?
     var lowPower = false
 
@@ -50,8 +51,11 @@ final class HeadphoneMotionProvider: NSObject, MotionProvider, CMHeadphoneMotion
                 self.lock.unlock()
                 if tooSoon { return }
             }
-            let deg = motion.attitude.pitch * 180 / .pi
-            self.onUpdate?(deg)
+            let attitude = motion.attitude
+            let pose = HeadPose(pitch: attitude.pitch * 180 / .pi,
+                                yaw: attitude.yaw * 180 / .pi,
+                                roll: attitude.roll * 180 / .pi)
+            self.onUpdate?(pose)
         }
     }
 
@@ -70,10 +74,10 @@ final class HeadphoneMotionProvider: NSObject, MotionProvider, CMHeadphoneMotion
     }
 }
 
-// MARK: - Mock：正弦波模拟，无 AirPods 时开发预览用
+// MARK: - Mock：慢速点头梯形波模拟，无 AirPods 时开发预览用
 
 final class MockMotionProvider: MotionProvider, @unchecked Sendable {
-    var onUpdate: (@Sendable (Double) -> Void)?
+    var onUpdate: (@Sendable (HeadPose) -> Void)?
     var onConnection: (@Sendable (Bool) -> Void)?
     var lowPower = false
     let authorizationDenied = false
@@ -86,9 +90,9 @@ final class MockMotionProvider: MotionProvider, @unchecked Sendable {
         task = Task.detached { [weak self] in
             var t: Double = 0
             while !Task.isCancelled {
-                // 25Hz 正弦波：约 -18° ~ +2° 之间缓慢摆动，周期性跌破阈值以触发提醒
-                let pitch = -8 - 10 * sin(t * 2 * .pi / 25)
-                self?.onUpdate?(pitch)
+                // 慢速点头梯形波：4s 一往复（1.75s 缓降到 -28°、停 0.25s、1.75s 回正、停 0.25s），
+                // 角速度约 16°/s，可触发 M1 劈砍；每 22s 大周期末尾深停 5s，兼容低头提醒演示
+                self?.onUpdate?(HeadPose(pitch: Self.mockPitch(at: t)))
                 t += 0.04
                 try? await Task.sleep(nanoseconds: 40_000_000)
             }
@@ -98,5 +102,32 @@ final class MockMotionProvider: MotionProvider, @unchecked Sendable {
     func stop() {
         task?.cancel()
         task = nil
+    }
+
+    /// 22s 大周期：3 个 4s 点头往复 + 1 次深停 5s 的点头（触发提醒演示）
+    static func mockPitch(at t: Double) -> Double {
+        let cycle = t.truncatingRemainder(dividingBy: 22)
+        switch cycle {
+        case 0 ..< 12:
+            return -nodWave(cycle.truncatingRemainder(dividingBy: 4))
+        case 12 ..< 13.75:
+            return -28 * (cycle - 12) / 1.75
+        case 13.75 ..< 18.75:
+            return -28
+        case 18.75 ..< 20.5:
+            return -28 * (1 - (cycle - 18.75) / 1.75)
+        default:
+            return 0
+        }
+    }
+
+    /// 单个点头往复（0~4s）：缓降到 -28° → 短停 → 回正 → 短停
+    private static func nodWave(_ u: Double) -> Double {
+        switch u {
+        case 0 ..< 1.75: return 28 * u / 1.75
+        case 1.75 ..< 2: return 28
+        case 2 ..< 3.75: return 28 * (1 - (u - 2) / 1.75)
+        default: return 0
+        }
     }
 }
