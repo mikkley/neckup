@@ -7,7 +7,6 @@ struct NotchView: View {
     @EnvironmentObject var monitor: PostureMonitor
     @EnvironmentObject var pomodoro: PomodoroTimer
     @EnvironmentObject var stats: StatsStore
-    @EnvironmentObject var codex: CodexStore
 
     @State private var breathing = false
     @State private var pulsing = false
@@ -137,7 +136,7 @@ struct NotchView: View {
         return ""
     }
 
-    // MARK: 展开态卡片（~180pt 玻璃拟态）
+    // MARK: 展开态卡片（直接排在岛背景上，无额外卡片层）
 
     private var expandedCard: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -173,35 +172,13 @@ struct NotchView: View {
             }
             .controlSize(.small)
 
-            growthRow
-
             if monitor.permissionDenied {
                 permissionGuide
             }
         }
-        .padding(12)
-        .frame(height: 180)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-        .padding(.horizontal, 8)
-        .padding(.top, 4)
-    }
-
-    /// 成长行（G-3）：像素山峰当前档 + 水滴数 + 五怪星级 mini（1/10/30 击败 → 1/2/3 星）
-    private var growthRow: some View {
-        HStack(spacing: 12) {
-            MountainPixel(stage: codex.mountain.stage)
-                .frame(width: 24, height: 16)
-            Text(codex.mountain.stage.displayName)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            Text("水滴 \(codex.mountain.droplets)")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            Spacer()
-            ForEach(MonsterType.allCases, id: \.self) { monster in
-                MonsterStarsMini(monster: monster, stars: codex.stars(for: monster))
-            }
-        }
+        .padding(.horizontal, 20)
+        .padding(.top, 8)
+        .frame(height: 156)
     }
 
     /// 当前姿势状态 → 直接告诉用户好不好、该怎么做
@@ -314,60 +291,5 @@ struct NotchView: View {
             UnevenRoundedRectangle(bottomLeadingRadius: 12, bottomTrailingRadius: 12)
                 .fill(Color.black.opacity(0.82))
         }
-    }
-}
-
-// MARK: - 成长行子组件
-
-/// 像素山峰 mini（6×4 像素格）：秃山灰 → 青山绿 → 雪峰白顶
-private struct MountainPixel: View {
-    let stage: MountainState.Stage
-
-    var body: some View {
-        Canvas { ctx, size in
-            let px = size.width / 6
-            let py = size.height / 4
-            // 山体三角（从底到顶每行内收一格）
-            let rows: [[Int]] = [[0, 5], [1, 4], [2, 3], [2, 3]]
-            let bodyColor: Color = switch stage {
-            case .barren: Color(red: 0.5, green: 0.48, blue: 0.45)
-            case .green, .snowPeak: Color(red: 0.35, green: 0.75, blue: 0.42)
-            }
-            for (r, cols) in rows.enumerated() {
-                for c in cols[0] ... cols[1] {
-                    ctx.fill(Path(CGRect(x: CGFloat(c) * px, y: CGFloat(r) * py, width: px, height: py)),
-                             with: .color(bodyColor))
-                }
-            }
-            // 雪峰：顶两格盖雪
-            if stage == .snowPeak {
-                for c in 2 ... 3 {
-                    ctx.fill(Path(CGRect(x: CGFloat(c) * px, y: 0, width: px, height: py * 2)),
-                             with: .color(.white))
-                }
-            }
-        }
-    }
-}
-
-/// 单怪星级 mini：主题色小方块 + 3 个星点（点亮数 = 星级）
-private struct MonsterStarsMini: View {
-    let monster: MonsterType
-    let stars: Int
-
-    var body: some View {
-        HStack(spacing: 4) {
-            RoundedRectangle(cornerRadius: 1, style: .continuous)
-                .fill(stars > 0 ? monster.themeColor : monster.themeColor.opacity(0.3))
-                .frame(width: 6, height: 6)
-            HStack(spacing: 2) {
-                ForEach(0 ..< 3, id: \.self) { i in
-                    Circle()
-                        .fill(i < stars ? Color.yellow : Color.white.opacity(0.2))
-                        .frame(width: 3, height: 3)
-                }
-            }
-        }
-        .help(monster.displayName)
     }
 }

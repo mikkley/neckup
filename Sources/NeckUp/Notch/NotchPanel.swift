@@ -68,7 +68,7 @@ final class NotchPanelManager {
         let collapsed = g.collapsedSize
         let size: NSSize = switch island {
         case .expanded:
-            NSSize(width: max(collapsed.width, 360), height: collapsed.height + 192)
+            NSSize(width: max(collapsed.width, 360), height: collapsed.height + 164)
         case .game:
             NSSize(width: max(collapsed.width, 360), height: collapsed.height + 292)
         case .collapsed, .reminder:
