@@ -37,20 +37,79 @@ struct NotchView: View {
     // MARK: 收缩态（也是提醒态的载体）
 
     private var collapsedRow: some View {
-        HStack(spacing: 8) {
-            statusDot
+        Group {
             if appState.islandState == .reminder {
-                Text(monitor.reminderText)
-                    .font(.system(.callout, design: .rounded).weight(.semibold))
-                    .foregroundStyle(.black.opacity(0.85))
-            } else if !trailingText.isEmpty {
-                Text(trailingText)
-                    .font(.system(.footnote, design: .rounded).weight(.medium))
-                    .foregroundStyle(.white.opacity(0.9))
+                // 提醒态：整幅暖黄 + 文案
+                HStack(spacing: 8) {
+                    statusDot
+                    Text(monitor.reminderText)
+                        .font(.system(.callout, design: .rounded).weight(.semibold))
+                        .foregroundStyle(.black.opacity(0.85))
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if appState.geometry.hasNotch {
+                // 刘海屏：状态分列刘海两侧，中间留空给刘海——一眼可见，无需点开
+                HStack(spacing: 0) {
+                    postureSide
+                        .frame(width: NotchGeometry.sideWidth, height: 24, alignment: .trailing)
+                    Color.clear
+                        .frame(width: appState.geometry.notchWidth)
+                    pomodoroSide
+                        .frame(width: NotchGeometry.sideWidth, height: 24, alignment: .leading)
+                }
+                .frame(maxHeight: .infinity)
+            } else {
+                // 无刘海胶囊：原单行内容
+                HStack(spacing: 8) {
+                    statusDot
+                    if !trailingText.isEmpty {
+                        Text(trailingText)
+                            .font(.system(.footnote, design: .rounded).weight(.medium))
+                            .foregroundStyle(.white.opacity(0.9))
+                    }
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .padding(.horizontal, 12)
             }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-        .padding(.horizontal, 12)
+    }
+
+    /// 刘海左侧：状态小字 + 呼吸圆点（贴刘海右对齐）
+    private var postureSide: some View {
+        HStack(spacing: 5) {
+            if !postureWord.isEmpty {
+                Text(postureWord)
+                    .font(.system(.caption2, design: .rounded).weight(.medium))
+                    .foregroundStyle(monitor.status == .good || monitor.status == .idle
+                                     ? .white.opacity(0.65) : dotColor)
+            }
+            statusDot
+        }
+    }
+
+    /// 刘海右侧：番茄钟状态（贴刘海左对齐；平时留白）
+    private var pomodoroSide: some View {
+        HStack(spacing: 4) {
+            if pomodoro.phase != .idle {
+                Image(systemName: pomodoro.phase == .focus ? "brain.head.profile" : "cup.and.saucer")
+                    .font(.system(size: 9))
+                Text(pomodoro.displayString)
+                    .font(.system(.caption, design: .monospaced).weight(.medium))
+            }
+        }
+        .foregroundStyle(.white.opacity(0.9))
+    }
+
+    /// 左侧状态小字（零学习：直接说状态，不给数字）
+    private var postureWord: String {
+        if !monitor.isMonitoring { return "已暂停" }
+        if !monitor.isWearing { return "未佩戴" }
+        switch monitor.status {
+        case .good: return "挺好"
+        case .borderline: return "有点低"
+        case .bad: return "快抬头"
+        case .idle: return ""
+        }
     }
 
     private var statusDot: some View {

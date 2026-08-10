@@ -35,6 +35,7 @@ final class NotchPanelManager {
     init(state: AppState) {
         self.state = state
         geometry = NotchGeometry.current()
+        state.geometry = geometry
         panel = NotchPanel(contentRect: Self.frame(for: state.islandState, geometry: geometry))
 
         let root = NotchView()
@@ -89,6 +90,7 @@ final class NotchPanelManager {
 
     private func reposition() {
         geometry = NotchGeometry.current()
+        state.geometry = geometry
         panel.setFrame(Self.frame(for: state.islandState, geometry: geometry), display: true)
     }
 }

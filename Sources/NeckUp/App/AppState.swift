@@ -24,6 +24,8 @@ final class AppState: ObservableObject {
     @Published private(set) var gameViewState: GameViewState?
     /// 首次进入游戏的一次性安全提示（设计文档 §7）
     @Published private(set) var safetyHint: String?
+    /// 刘海几何（NotchPanelManager 在屏幕变化时更新；收缩态布局依此避让刘海）
+    @Published var geometry = NotchGeometry.current()
 
     /// 岛状态变化回调（NotchPanelManager 调整窗口尺寸）
     var onIslandStateChange: ((IslandState) -> Void)?
