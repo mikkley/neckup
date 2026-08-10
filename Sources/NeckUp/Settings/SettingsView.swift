@@ -28,7 +28,7 @@ struct SettingsView: View {
                 Stepper("持续时长：\(Int(settings.sustainedSec)) 秒",
                         value: $settings.sustainedSec, in: 2 ... 15)
                 Toggle("启用低头提醒", isOn: $settings.remindersEnabled)
-                Toggle("通知提示音", isOn: $settings.soundEnabled)
+                Toggle("音效与提示音", isOn: $settings.soundEnabled)
             }
             Section("休息段微游戏") {
                 Toggle("番茄休息时打怪舒展", isOn: $settings.gameEnabled)

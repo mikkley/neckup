@@ -17,6 +17,7 @@ final class StatusBarController: NSObject {
         addItem("暂停监测", action: #selector(toggleMonitoring))
         addItem("开始番茄钟", action: #selector(togglePomodoro))
         addItem("坐直校准", action: #selector(recalibrate))
+        addItem("静音音效", action: #selector(toggleMute))
         menu.addItem(.separator())
         addItem("设置…", action: #selector(openSettings))
         addItem("退出 NeckUp", action: #selector(quit))
@@ -50,6 +51,11 @@ final class StatusBarController: NSObject {
         state.monitor.recalibrate()
     }
 
+    /// 静音/恢复全部音效（与设置页「通知提示音」同一开关，SoundEngine 播放时实时生效）
+    @objc private func toggleMute() {
+        state.settings.soundEnabled.toggle()
+    }
+
     @objc private func openSettings() {
         NSApp.activate(ignoringOtherApps: true)
         NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
@@ -66,5 +72,6 @@ extension StatusBarController: NSMenuDelegate {
         menu.items[0].title = state.islandState == .expanded ? "收起灵动岛" : "展开灵动岛"
         menu.items[1].title = state.monitor.isMonitoring ? "暂停监测" : "继续监测"
         menu.items[2].title = state.pomodoro.phase == .idle ? "开始番茄钟" : "停止番茄钟"
+        menu.items[4].title = state.settings.soundEnabled ? "静音音效" : "恢复音效"
     }
 }
