@@ -141,21 +141,25 @@ struct NotchView: View {
 
     private var expandedCard: some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                // 零学习：只给状态和建议，不显示角度数值
-                Text(statusSentence)
-                Spacer()
+            HStack(spacing: 10) {
+                VStack(alignment: .leading, spacing: 6) {
+                    // 零学习：只给状态和建议，不显示角度数值
+                    Text(statusSentence)
+                    // 一句人话总结；详细数字在菜单栏「今日统计」里
+                    Text(daySummarySentence)
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer(minLength: 0)
                 Text(dayStatusWord)
                     .foregroundStyle(dayStatusColor)
+                postureGauge
             }
             .font(.callout)
 
-            postureIndicator
-
-            // 一句人话总结；详细数字在菜单栏「今日统计」里
-            Text(daySummarySentence)
-                .font(.footnote)
-                .foregroundStyle(.secondary)
+            Text("小球跟着头动，居中就是坐直了")
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
 
             HStack(spacing: 8) {
                 pomodoroControls
@@ -245,22 +249,22 @@ struct NotchView: View {
         stats.today.goodPostureSec + stats.today.badPostureSec > 0
     }
 
-    /// 迷你姿态指示器：小球随俯仰角上下移动（水平仪隐喻，零学习）
-    private var postureIndicator: some View {
-        VStack(spacing: 4) {
-            ZStack {
-                Capsule().fill(.white.opacity(0.12))
-                Circle()
-                    .fill(dotColor)
-                    .frame(width: 12, height: 12)
-                    .offset(y: CGFloat(max(-1, min(1, monitor.pitchDeg / 30))) * 7)
-                    .animation(.easeOut(duration: 0.2), value: monitor.pitchDeg)
-            }
-            .frame(height: 20)
-            Text("小球跟着你的头走，居中就是坐直了")
-                .font(.caption2)
-                .foregroundStyle(.tertiary)
+    /// 竖直水平仪：低头小球往下掉、抬头往上升，居中就是坐直（零学习）
+    private var postureGauge: some View {
+        ZStack {
+            Capsule().fill(.white.opacity(0.12))
+            // 居中参考线
+            Capsule()
+                .fill(.white.opacity(0.3))
+                .frame(width: 8, height: 1)
+            Circle()
+                .fill(dotColor)
+                .frame(width: 10, height: 10)
+                // pitchDeg 负值=低头 → 小球向下（offset.y 正值向下）
+                .offset(y: -CGFloat(max(-1, min(1, monitor.pitchDeg / 30))) * 22)
+                .animation(.easeOut(duration: 0.2), value: monitor.pitchDeg)
         }
+        .frame(width: 12, height: 56)
     }
 
     @ViewBuilder
