@@ -192,6 +192,8 @@ public struct QiTurtleGame: Sendable {
     private mutating func advanceTime(to now: Date) -> [Event] {
         guard result == nil else { return [] }
         var events: [Event] = []
+        // 姿态流中断（摘耳机/蓝牙卡顿）→ 停蓄力音，恢复后需重新蓄力
+        if let lastPoseAt, now.timeIntervalSince(lastPoseAt) > 0.5 { chargingNow = false }
         if !idleHintShown, now.timeIntervalSince(lastActiveAt) >= Self.idleTimeout {
             idleHintShown = true
             events.append(.idleHint)

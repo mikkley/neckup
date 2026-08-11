@@ -194,6 +194,10 @@ public struct ScaleJellyfishGame: Sendable {
         } else {
             gemX = Self.gemSlots.randomElement() ?? 0
         }
+        // 大宝石不落中心槽：定住判定要求方向匹配，中心槽永远无法蓄力
+        if gemBig, abs(gemX) <= 0.2 {
+            gemX = Bool.random() ? -0.45 : 0.45
+        }
         slotIndex += 1
         gemY = 0
         gemActive = true
@@ -207,6 +211,9 @@ public struct ScaleJellyfishGame: Sendable {
         // 宝石下落 dt（update 与 tick 都会走到，取距上次推进的真实间隔）
         let dt = max(now.timeIntervalSince(lastAdvanceAt), 0)
         lastAdvanceAt = now
+
+        // 姿态流中断（摘耳机/蓝牙卡顿）→ 停蓄力音，恢复后需重新定住
+        if let lastPoseAt, now.timeIntervalSince(lastPoseAt) > 0.5 { holdingNow = false }
 
         if gemActive, !gemHovering {
             gemY += dt / Self.fallSec

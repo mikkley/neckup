@@ -39,6 +39,11 @@ final class PostureMonitor: ObservableObject {
     private var degradedUntil: Date?           // 连续无视后降级时段
     private var lastSampleRecordAt = Date.distantPast
     private var started = false
+    /// 对局期间豁免提醒与低头统计（由 AppState 开局/收局时设置）
+    var gameActive = false
+    /// yaw 连续化状态（±180° 环绕展开，防跨圈跳变：速度尖刺/误判满转）
+    private var lastRawYaw: Double?
+    private var yawAccum: Double?
 
     var status: Status {
         guard isMonitoring, isWearing else { return .idle }
@@ -98,12 +103,29 @@ final class PostureMonitor: ObservableObject {
             window.removeAll()
             badSince = nil
             isBadPosture = false
+            lastRawYaw = nil
+            yawAccum = nil
             exitReminder()
         }
     }
 
+    /// yaw ±180° 环绕展开为连续值：跨圈帧差归一到 ±180，消除速度尖刺与「假满转」
+    private func unwrapYaw(_ raw: Double) -> Double {
+        defer { lastRawYaw = raw }
+        guard let last = lastRawYaw else {
+            yawAccum = raw
+            return raw
+        }
+        var d = (raw - last).truncatingRemainder(dividingBy: 360)
+        if d > 180 { d -= 360 } else if d < -180 { d += 360 }
+        let unwrapped = (yawAccum ?? raw) + d
+        yawAccum = unwrapped
+        return unwrapped
+    }
+
     private func handle(pose: HeadPose) {
         if !isWearing { isWearing = true }   // 有数据流即视为佩戴中
+        let pose = HeadPose(pitch: pose.pitch, yaw: unwrapYaw(pose.yaw), roll: pose.roll)
         if calibration == nil { calibration = pose }   // 首帧为零点（三轴各自校准）
         let c = calibration ?? pose
         let adjusted = HeadPose(pitch: pose.pitch - c.pitch,
@@ -114,16 +136,16 @@ final class PostureMonitor: ObservableObject {
         if window.count > 25 { window.removeFirst(window.count - 25) }
         pitchDeg = window.reduce(0, +) / Double(window.count)
         evaluate()
-        // 每秒聚合一条样本
+        // 每秒聚合一条样本（对局期间不计：做颈椎操不算低头）
         let now = Date()
-        if now.timeIntervalSince(lastSampleRecordAt) >= 1 {
+        if !gameActive, now.timeIntervalSince(lastSampleRecordAt) >= 1 {
             lastSampleRecordAt = now
             onSample?(pitchDeg, isBadPosture)
         }
     }
 
     private func evaluate() {
-        guard isMonitoring, isWearing else { return }
+        guard isMonitoring, isWearing, !gameActive else { return }   // 对局中不提醒不累计
         let now = Date()
         if pitchDeg < settings.thresholdDeg {
             goodSince = nil

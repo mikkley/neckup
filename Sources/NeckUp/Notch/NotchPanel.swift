@@ -71,7 +71,10 @@ final class NotchPanelManager {
             NSSize(width: max(collapsed.width, 360), height: collapsed.height + 164)
         case .game:
             NSSize(width: max(collapsed.width, 360), height: collapsed.height + 292)
-        case .collapsed, .reminder:
+        case .reminder:
+            // 提醒态加高：文案落在刘海下缘以下，不被开孔遮挡
+            NSSize(width: collapsed.width, height: collapsed.height + 26)
+        case .collapsed:
             collapsed
         }
         let x = g.screenFrame.midX - size.width / 2

@@ -114,6 +114,9 @@ final class StatsStore: ObservableObject {
         guard let data = try? Data(contentsOf: storeURL) else { return Payload(summaries: [:], sessions: []) }
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
-        return (try? decoder.decode(Payload.self, from: data)) ?? Payload(summaries: [:], sessions: [])
+        if let payload = try? decoder.decode(Payload.self, from: data) { return payload }
+        // 解码失败（写入中断/字段不兼容）：备份原文件再重建，绝不用空数据覆盖历史
+        try? FileManager.default.moveItem(at: storeURL, to: storeURL.appendingPathExtension("bak"))
+        return Payload(summaries: [:], sessions: [])
     }
 }

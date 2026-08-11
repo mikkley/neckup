@@ -119,6 +119,8 @@ final class AppState: ObservableObject {
 
     private func startGame() {
         guard game == nil else { return }
+        monitor.setHighFrequency(true)   // 对局需要 25Hz（覆盖休息段中途开开关的路径）
+        monitor.gameActive = true        // 对局期间豁免提醒与低头统计（做颈椎操不算低头）
         let monster = deck.draw()
         game = ActiveGame(monster: monster, startAt: Date())
         mock?.setMonster(monster)   // mock 波形切到当前怪的轴（无 AirPods 预览）
@@ -151,7 +153,9 @@ final class AppState: ObservableObject {
         safetyHint = nil
         mock?.setMonster(nil)
         sound.stopCharge()
-        if islandState == .game { islandState = .collapsed }
+        monitor.gameActive = false
+        // 对局中被压制的提醒在结束后恢复，不吞提醒
+        if islandState == .game { islandState = monitor.isReminding ? .reminder : .collapsed }
         monitor.setHighFrequency(pomodoro.phase == .focus)
     }
 
@@ -216,7 +220,8 @@ final class AppState: ObservableObject {
             case .victory(let session):
                 sound.stopCharge()
                 sound.playVictory()
-                codex.record(session: session)
+                // 0 次动作的对局（挂机/离开）不计图鉴与水滴，避免挂机涨星
+                if session.reps > 0 { codex.record(session: session) }
                 // 结算页停留 5s 后自动收回
                 Task { [weak self] in
                     try? await Task.sleep(nanoseconds: 5_000_000_000)

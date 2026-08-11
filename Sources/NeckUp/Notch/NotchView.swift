@@ -38,14 +38,15 @@ struct NotchView: View {
     private var collapsedRow: some View {
         Group {
             if appState.islandState == .reminder {
-                // 提醒态：整幅暖黄 + 文案
+                // 提醒态：整幅暖黄 + 文案（底对齐，落在刘海下缘以下的加高区，不被开孔遮挡）
                 HStack(spacing: 8) {
                     statusDot
                     Text(monitor.reminderText)
                         .font(.system(.callout, design: .rounded).weight(.semibold))
                         .foregroundStyle(.black.opacity(0.85))
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+                .padding(.bottom, 6)
             } else if appState.geometry.hasNotch {
                 // 刘海屏：状态分列刘海两侧，中间留空给刘海——一眼可见，无需点开
                 HStack(spacing: 0) {
@@ -160,20 +161,21 @@ struct NotchView: View {
                 .font(.caption2)
                 .foregroundStyle(.tertiary)
 
-            HStack(spacing: 8) {
-                pomodoroControls
-                Spacer()
-                Button(monitor.isMonitoring ? "暂停监测" : "继续监测") {
-                    monitor.isMonitoring.toggle()
-                }
-                .buttonStyle(.bordered)
-                Button("坐直校准") { monitor.recalibrate() }
-                    .buttonStyle(.bordered)
-            }
-            .controlSize(.small)
-
             if monitor.permissionDenied {
+                // 无权限时监测/校准都无意义：引导行替换控制行，避免内容溢出卡片
                 permissionGuide
+            } else {
+                HStack(spacing: 8) {
+                    pomodoroControls
+                    Spacer()
+                    Button(monitor.isMonitoring ? "暂停监测" : "继续监测") {
+                        monitor.isMonitoring.toggle()
+                    }
+                    .buttonStyle(.bordered)
+                    Button("坐直校准") { monitor.recalibrate() }
+                        .buttonStyle(.bordered)
+                }
+                .controlSize(.small)
             }
         }
         .padding(.horizontal, 20)
@@ -262,10 +264,10 @@ struct NotchView: View {
         }
     }
 
-    /// F7：未授权引导
+    /// F7：未授权引导（文案从简，适配无刘海屏的窄卡片）
     private var permissionGuide: some View {
         HStack(spacing: 8) {
-            Text("需要「运动与健身」权限才能读取 AirPods 数据")
+            Text("需要「运动与健身」权限")
                 .font(.footnote)
                 .foregroundStyle(.orange)
             Button("打开系统设置") {
