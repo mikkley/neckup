@@ -24,13 +24,21 @@ NeckUp 是一个 macOS 灵动岛应用：用 AirPods 里的运动传感器实时
 - **成长系统**：水滴浇山（秃山 → 青山 → 雪峰），五怪图鉴星级；佛系模式可关掉枯萎机制
 - **当日统计**：良好时长、低头次数、专注时长，本地 JSON 落盘，不出本机
 
-## 系统要求
+## 安装
 
-- macOS 14 Sonoma 及以上（`CMHeadphoneMotionManager` 硬性要求）
-- AirPods Pro（1 代+）/ AirPods（3 代）/ AirPods Max / Beats Fit Pro
-- 首次运行需授予**「运动与健身」**权限（读取 AirPods 头部运动数据）
+**Homebrew（推荐）**
 
-## 构建与运行
+```bash
+brew install --cask mikkley/neckup/neckup
+```
+
+**手动下载**
+
+从 [Releases](https://github.com/mikkley/neckup/releases) 下载 `NeckUp-macOS.zip`，解压后拖入「应用程序」。
+
+> 首次打开如提示「无法验证开发者」（ad-hoc 签名、未公证的正常现象）：右键 App → 打开，或终端执行 `xattr -dr com.apple.quarantine /Applications/NeckUp.app`。首次运行需授予**「运动与健身」**权限（读取 AirPods 头部运动数据）。
+
+## 从源码构建
 
 ```bash
 # 编译验证 + 跑测试
@@ -43,6 +51,12 @@ open NeckUp.app
 # 无 AirPods 开发预览：模拟波形数据
 ./NeckUp.app/Contents/MacOS/NeckUp --mock
 ```
+
+## 系统要求
+
+- macOS 14 Sonoma 及以上（`CMHeadphoneMotionManager` 硬性要求）
+- AirPods Pro（1 代+）/ AirPods（3 代）/ AirPods Max / Beats Fit Pro
+- 首次运行需授予**「运动与健身」**权限（读取 AirPods 头部运动数据）
 
 ## 技术说明
 
