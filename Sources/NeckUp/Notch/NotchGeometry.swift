@@ -12,7 +12,9 @@ struct NotchGeometry {
     static let sideWidth: Double = 92
 
     static func current() -> NotchGeometry {
-        let screen = NSScreen.main ?? NSScreen.screens[0]
+        // 岛的本体是刘海：优先选有刘海的屏，而不是键盘焦点屏（焦点可能在外接显示器上）
+        let screen = NSScreen.screens.first { $0.safeAreaInsets.top > 0 }
+            ?? NSScreen.main ?? NSScreen.screens[0]
         let topInset = screen.safeAreaInsets.top
         if topInset > 0 {
             // 刘海宽度 = 屏宽 - 左右可用区

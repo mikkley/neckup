@@ -80,7 +80,7 @@ final class NotchPanelManager {
             collapsed
         }
         let x = g.screenFrame.midX - size.width / 2
-        let y = g.screenFrame.maxY - size.height - (g.hasNotch ? 0 : 4)
+        let y = g.screenFrame.maxY - size.height   // 始终紧贴屏幕顶边
         return NSRect(origin: NSPoint(x: x, y: y), size: size)
     }
 
