@@ -7,6 +7,7 @@ struct NotchView: View {
     @EnvironmentObject var monitor: PostureMonitor
     @EnvironmentObject var pomodoro: PomodoroTimer
     @EnvironmentObject var stats: StatsStore
+    @EnvironmentObject var settings: AppSettings
 
     @State private var breathing = false
     @State private var pulsing = false
@@ -164,17 +165,30 @@ struct NotchView: View {
                 Text(dayStatusWord)
                     .foregroundStyle(dayStatusColor)
                 VStack(spacing: 2) {
-                    // 设置入口（与菜单栏「设置…」等效），放在角落不抢信息
-                    Button {
-                        NotificationCenter.default.post(name: .neckUpShowSettings, object: nil)
-                    } label: {
-                        Image(systemName: "gearshape")
-                            .font(.system(size: 11))
-                            .foregroundStyle(.white.opacity(0.45))
-                            .frame(width: 22, height: 14)
-                            .contentShape(Rectangle())
+                    HStack(spacing: 8) {
+                        // 静音开关（与菜单栏「静音音效」、设置页同一开关）
+                        Button {
+                            settings.soundEnabled.toggle()
+                        } label: {
+                            Image(systemName: settings.soundEnabled ? "speaker.wave.2.fill" : "speaker.slash.fill")
+                                .font(.system(size: 11))
+                                .foregroundStyle(.white.opacity(0.45))
+                                .frame(width: 16, height: 14)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        // 设置入口（与菜单栏「设置…」等效），放在角落不抢信息
+                        Button {
+                            NotificationCenter.default.post(name: .neckUpShowSettings, object: nil)
+                        } label: {
+                            Image(systemName: "gearshape")
+                                .font(.system(size: 11))
+                                .foregroundStyle(.white.opacity(0.45))
+                                .frame(width: 16, height: 14)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
                     }
-                    .buttonStyle(.plain)
                     // 姿态镜像小人：比水平仪直观，转头/低头/侧倾都能看出来
                     HeadAvatar(pose: monitor.headPose)
                         .frame(width: 48, height: 48)
