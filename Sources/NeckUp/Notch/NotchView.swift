@@ -294,8 +294,9 @@ struct NotchView: View {
                 .fill(Color(red: 1.0, green: 0.82, blue: 0.45).opacity(pulsing ? 0.95 : 0.55))
                 .animation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true), value: pulsing)
         } else {
+            // 实心黑：半透明在浅色壁纸上会让岛「发白」，看起来不贴合屏幕边缘
             UnevenRoundedRectangle(bottomLeadingRadius: 12, bottomTrailingRadius: 12)
-                .fill(Color.black.opacity(0.82))
+                .fill(Color.black)
         }
     }
 }

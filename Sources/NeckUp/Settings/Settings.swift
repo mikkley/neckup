@@ -11,6 +11,7 @@ final class AppSettings: ObservableObject {
         static let mock = "mockMode"
         static let game = "gameEnabled"
         static let zen = "zenMode"
+        static let display = "displayID"
     }
 
     @Published var thresholdDeg: Double { didSet { defaults.set(thresholdDeg, forKey: Keys.threshold) } }
@@ -23,6 +24,8 @@ final class AppSettings: ObservableObject {
     @Published var gameEnabled: Bool { didSet { defaults.set(gameEnabled, forKey: Keys.game) } }
     /// 佛系模式：山峰不枯萎（设计文档 §5.2）
     @Published var zenMode: Bool { didSet { defaults.set(zenMode, forKey: Keys.zen) } }
+    /// 灵动岛停靠的显示器（CGDirectDisplayID 字符串，空 = 自动：刘海屏优先）
+    @Published var displayID: String { didSet { defaults.set(displayID, forKey: Keys.display) } }
 
     private let defaults = UserDefaults.standard
 
@@ -43,6 +46,7 @@ final class AppSettings: ObservableObject {
         mockMode = defaults.bool(forKey: Keys.mock)
         gameEnabled = defaults.bool(forKey: Keys.game)
         zenMode = defaults.bool(forKey: Keys.zen)
+        displayID = defaults.string(forKey: Keys.display) ?? ""
     }
 
     /// 是否请求 mock 数据：`--mock` 启动参数 或 设置开关

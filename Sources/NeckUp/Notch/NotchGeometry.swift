@@ -11,9 +11,16 @@ struct NotchGeometry {
     /// 收缩态刘海两侧内容区宽度（左：姿势状态，右：番茄钟）
     static let sideWidth: Double = 92
 
-    static func current() -> NotchGeometry {
-        // 岛的本体是刘海：优先选有刘海的屏，而不是键盘焦点屏（焦点可能在外接显示器上）
-        let screen = NSScreen.screens.first { $0.safeAreaInsets.top > 0 }
+    /// 显示器的稳定标识（跨重启不变，用于设置里记住用户选择）
+    static func displayID(of screen: NSScreen) -> String {
+        (screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? CGDirectDisplayID)
+            .map(String.init) ?? ""
+    }
+
+    static func current(preferredID: String = "") -> NotchGeometry {
+        // 选屏优先级：用户指定 > 刘海屏（岛的本体）> 键盘焦点屏
+        let screen = NSScreen.screens.first { !preferredID.isEmpty && displayID(of: $0) == preferredID }
+            ?? NSScreen.screens.first { $0.safeAreaInsets.top > 0 }
             ?? NSScreen.main ?? NSScreen.screens[0]
         let topInset = screen.safeAreaInsets.top
         if topInset > 0 {

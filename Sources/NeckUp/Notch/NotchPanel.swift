@@ -1,4 +1,5 @@
 import AppKit
+import Combine
 import SwiftUI
 
 /// 岛窗口：无边框非激活面板，置顶于菜单栏之上，全屏 Space 稳定
@@ -33,10 +34,11 @@ final class NotchPanelManager {
     private let state: AppState
     private var geometry: NotchGeometry
     private var screenObserver: NSObjectProtocol?
+    private var cancellables: Set<AnyCancellable> = []
 
     init(state: AppState) {
         self.state = state
-        geometry = NotchGeometry.current()
+        geometry = NotchGeometry.current(preferredID: state.settings.displayID)
         state.geometry = geometry
         panel = NotchPanel(contentRect: Self.frame(for: state.islandState, geometry: geometry))
 
@@ -61,6 +63,10 @@ final class NotchPanelManager {
         ) { [weak self] _ in
             Task { @MainActor in self?.reposition() }
         }
+        // 设置里切换显示器 → 立即把岛搬过去
+        state.settings.$displayID.dropFirst().sink { [weak self] _ in
+            Task { @MainActor in self?.reposition() }
+        }.store(in: &cancellables)
     }
 
     // 说明：manager 与 App 同生命周期，观察者无需手动移除。
@@ -94,7 +100,7 @@ final class NotchPanelManager {
     }
 
     private func reposition() {
-        geometry = NotchGeometry.current()
+        geometry = NotchGeometry.current(preferredID: state.settings.displayID)
         state.geometry = geometry
         panel.setFrame(Self.frame(for: state.islandState, geometry: geometry), display: true)
     }

@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 /// 设置窗口：灵敏度、持续时长、提醒开关等（零学习：不暴露角度）
@@ -36,6 +37,14 @@ struct SettingsView: View {
                 Text("休息 5 分钟里，用缓慢的颈部动作打跑僵硬怪；可随时关闭。")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+            }
+            Section("灵动岛") {
+                Picker("显示在", selection: $settings.displayID) {
+                    Text("自动（刘海屏优先）").tag("")
+                    ForEach(NSScreen.screens, id: \.self) { screen in
+                        Text(screen.localizedName).tag(NotchGeometry.displayID(of: screen))
+                    }
+                }
             }
             Section("传感器") {
                 Button("坐直后点此校准") { monitor.recalibrate() }
