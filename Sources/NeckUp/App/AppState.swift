@@ -10,7 +10,11 @@ final class AppState: ObservableObject {
     }
 
     @Published var islandState: IslandState = .collapsed {
-        didSet { onIslandStateChange?(islandState) }
+        didSet {
+            onIslandStateChange?(islandState)
+            // 展开态有小人和状态跟随，临时拉满采样率（传感器流本来就开着，只影响上报频率）
+            if islandState == .expanded { monitor.setHighFrequency(true) } else { refreshSamplingRate() }
+        }
     }
 
     let settings: AppSettings
@@ -99,7 +103,7 @@ final class AppState: ObservableObject {
             case .focus, .idle:
                 if self.game != nil { self.endGame() }
             }
-            self.monitor.setHighFrequency(phase == .focus || self.game != nil)
+            self.refreshSamplingRate()
         }
         // 游戏中途关掉开关 → 立即收回
         settings.$gameEnabled.dropFirst().sink { [weak self] on in
@@ -120,6 +124,11 @@ final class AppState: ObservableObject {
 
     func start() {
         monitor.start()
+    }
+
+    /// 传感器采样率调度：番茄钟专注期/对局期 25Hz，其余低功耗（引导页打开时由引导控制器临时拉满）
+    func refreshSamplingRate() {
+        monitor.setHighFrequency(pomodoro.phase == .focus || game != nil)
     }
 
     // MARK: 定时活动提醒（独立于番茄钟）
@@ -191,7 +200,7 @@ final class AppState: ObservableObject {
         monitor.gameActive = false
         // 对局中被压制的提醒在结束后恢复，不吞提醒
         if islandState == .game { islandState = monitor.isReminding ? .reminder : .collapsed }
-        monitor.setHighFrequency(pomodoro.phase == .focus)
+        refreshSamplingRate()
     }
 
     private func feedGame(pose: HeadPose) {

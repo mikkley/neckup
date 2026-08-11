@@ -1,6 +1,6 @@
 import Foundation
 
-/// 头部姿态快照（度）：pitch 低头为负，yaw 左右转头，roll 侧屈
+/// 头部姿态快照（度，真机实测约定）：pitch 低头为负；yaw 左转为正；roll 左侧倾（左耳找左肩）为正
 public struct HeadPose: Sendable, Equatable {
     public var pitch: Double
     public var yaw: Double

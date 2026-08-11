@@ -139,6 +139,20 @@ struct OnboardingView: View {
             }
             .buttonStyle(.borderedProminent)
             .disabled(!monitor.isWearing)
+
+            // --logpose 调试：点按钮 → 做动作保持 2s → 回正；日志里按 MARK 分段识别转轴
+            if PoseDebugLog.enabled {
+                HStack(spacing: 8) {
+                    Button("左转") { PoseDebugLog.mark("turn_left") }
+                    Button("右转") { PoseDebugLog.mark("turn_right") }
+                    Button("低头") { PoseDebugLog.mark("nod_down") }
+                    Button("左侧倾") { PoseDebugLog.mark("tilt_left") }
+                }
+                .controlSize(.small)
+                Text("调试：点按钮后做出动作并保持 2 秒，再回正")
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+            }
         }
     }
 
@@ -205,58 +219,3 @@ struct OnboardingView: View {
     }
 }
 
-// MARK: - 像素人头（跟随头部姿态）
-
-/// 12×12 像素小人：yaw 左右平移、pitch 上下平移、roll 侧倾旋转
-struct HeadAvatar: View {
-    let pose: HeadPose
-
-    // H=头发 S=皮肤 E=眼睛 M=嘴 .=空
-    private static let grid: [String] = [
-        "....HHHH....",
-        "..HHHHHHHH..",
-        ".HHHHHHHHHH.",
-        ".HHSSSSSSHH.",
-        ".HHSSSSSSHH.",
-        ".HHSESSESHH.",
-        ".HHSSSSSSHH.",
-        ".HHSSMMSSHH.",
-        "..SSSSSSSS..",
-        "..SSSSSSSS..",
-        "...SSSSSS...",
-        "............",
-    ]
-
-    private static let colors: [Character: Color] = [
-        "H": Color(red: 0.25, green: 0.18, blue: 0.14),
-        "S": Color(red: 0.98, green: 0.78, blue: 0.58),
-        "E": Color(red: 0.12, green: 0.12, blue: 0.14),
-        "M": Color(red: 0.75, green: 0.3, blue: 0.25),
-    ]
-
-    var body: some View {
-        Canvas { ctx, size in
-            let k = size.width / 12
-            var c = ctx
-            // roll 侧倾 → 小幅旋转；yaw/pitch → 平移（低头小人往下走）
-            c.translateBy(x: size.width / 2, y: size.height / 2)
-            c.rotate(by: .degrees(-pose.roll * 0.4))
-            c.translateBy(
-                x: CGFloat(max(-25, min(25, pose.yaw))) * k * 0.10,
-                y: CGFloat(max(-25, min(25, -pose.pitch))) * k * 0.10
-            )
-            c.translateBy(x: -size.width / 2, y: -size.height / 2)
-            for (row, line) in Self.grid.enumerated() {
-                for (col, ch) in line.enumerated() {
-                    guard let color = Self.colors[ch] else { continue }
-                    c.fill(
-                        Path(CGRect(x: CGFloat(col) * k, y: CGFloat(row) * k,
-                                    width: k + 0.5, height: k + 0.5)),
-                        with: .color(color)
-                    )
-                }
-            }
-        }
-        .animation(.easeOut(duration: 0.15), value: pose)
-    }
-}

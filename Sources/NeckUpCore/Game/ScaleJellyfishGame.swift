@@ -119,7 +119,8 @@ public struct ScaleJellyfishGame: Sendable {
         lastPoseAt = now
         let speed = abs(velocity)
 
-        trayX = min(max(roll / Self.trayFullAngle, -1), 1)
+        // roll 左侧倾为正（真机实测）：左倾 → 托盘左移（trayX 正值 = 屏幕右侧）
+        trayX = min(max(-roll / Self.trayFullAngle, -1), 1)
 
         if abs(roll) >= Self.idleRollMin {
             lastActiveAt = now
@@ -134,8 +135,9 @@ public struct ScaleJellyfishGame: Sendable {
             showMessage("慢一点 🐢", for: 2.5, at: now)
         }
 
+        // 宝石在左（gemX<0）→ 左倾（roll>0）去接
         let matchedSide = gemActive && abs(gemX) > 0.2
-            && ((gemX < 0 && roll < -1) || (gemX > 0 && roll > 1))
+            && ((gemX < 0 && roll > 1) || (gemX > 0 && roll < -1))
         holdingNow = false
         if gemHovering {
             if matchedSide, abs(roll) >= Self.holdAngle, !tooFastLatched, speed <= SafetyLimits.warnSpeed {

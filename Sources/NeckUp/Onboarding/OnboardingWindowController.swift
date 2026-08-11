@@ -11,6 +11,7 @@ extension Notification.Name {
 final class OnboardingWindowController {
     private let state: AppState
     private var window: NSWindow?
+    private var closeObserver: NSObjectProtocol?
 
     init(state: AppState) {
         self.state = state
@@ -41,13 +42,29 @@ final class OnboardingWindowController {
             w.makeKeyAndOrderFront(nil)
             window = w
         }
+        // 关闭（完成或点叉）统一走 handleClose：落完成标记 + 恢复采样率
+        if closeObserver == nil, let window {
+            closeObserver = NotificationCenter.default.addObserver(
+                forName: NSWindow.willCloseNotification, object: window, queue: .main
+            ) { [weak self] _ in
+                Task { @MainActor in self?.handleClose() }
+            }
+        }
+        // 引导期间传感器全速（25Hz）：真机下校准页小人才跟手，不会被 0.5Hz 低功耗卡成两秒一跳
+        state.monitor.setHighFrequency(true)
         // accessory 应用 activate 不一定抢到前台，orderFrontRegardless 保证窗口不被其他 App 压住
         window?.orderFrontRegardless()
         NSApp.activate(ignoringOtherApps: true)
     }
 
     private func finish() {
-        UserDefaults.standard.set(true, forKey: "neckUpOnboardingDone")
         window?.close()
+    }
+
+    private func handleClose() {
+        if let closeObserver { NotificationCenter.default.removeObserver(closeObserver) }
+        closeObserver = nil
+        UserDefaults.standard.set(true, forKey: "neckUpOnboardingDone")
+        state.refreshSamplingRate()
     }
 }

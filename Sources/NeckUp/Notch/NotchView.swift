@@ -157,7 +157,10 @@ struct NotchView: View {
                 Spacer(minLength: 0)
                 Text(dayStatusWord)
                     .foregroundStyle(dayStatusColor)
-                postureGauge
+                // 姿态镜像小人：比水平仪直观，转头/低头/侧倾都能看出来
+                HeadAvatar(pose: monitor.headPose)
+                    .frame(width: 56, height: 56)
+                    .background(.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
             }
             .font(.callout)
 
@@ -165,7 +168,7 @@ struct NotchView: View {
                 // 无权限：引导行替换提示行（控制行保留——番茄钟不依赖传感器）
                 permissionGuide
             } else {
-                Text("小球跟着头动，居中就是坐直了")
+                Text("小人跟着你动，脸正居中就是坐直了")
                     .font(.caption2)
                     .foregroundStyle(.tertiary)
             }
@@ -230,24 +233,6 @@ struct NotchView: View {
 
     private var hasDataToday: Bool {
         stats.today.goodPostureSec + stats.today.badPostureSec > 0
-    }
-
-    /// 竖直水平仪：低头小球往下掉、抬头往上升，居中就是坐直（零学习）
-    private var postureGauge: some View {
-        ZStack {
-            Capsule().fill(.white.opacity(0.12))
-            // 居中参考线
-            Capsule()
-                .fill(.white.opacity(0.3))
-                .frame(width: 8, height: 1)
-            Circle()
-                .fill(dotColor)
-                .frame(width: 10, height: 10)
-                // pitchDeg 负值=低头 → 小球向下（offset.y 正值向下）
-                .offset(y: -CGFloat(max(-1, min(1, monitor.pitchDeg / 30))) * 22)
-                .animation(.easeOut(duration: 0.2), value: monitor.pitchDeg)
-        }
-        .frame(width: 12, height: 56)
     }
 
     @ViewBuilder

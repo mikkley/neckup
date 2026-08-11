@@ -2,6 +2,26 @@ import CoreMotion
 import Foundation
 import NeckUpCore
 
+/// --logpose 调试日志：传感器帧与动作标记都写这里（/tmp/neckup-qlog.txt）
+enum PoseDebugLog {
+    static let enabled = ProcessInfo.processInfo.arguments.contains("--logpose")
+    static let path = "/tmp/neckup-qlog.txt"
+
+    static func write(_ line: String) {
+        guard enabled, let data = line.data(using: .utf8) else { return }
+        if let h = FileHandle(forWritingAtPath: path) {
+            h.seekToEndOfFile(); h.write(data); try? h.close()
+        } else {
+            FileManager.default.createFile(atPath: path, contents: data)
+        }
+    }
+
+    /// 校准页调试按钮的动作标记
+    static func mark(_ label: String) {
+        write("MARK \(label)\n")
+    }
+}
+
 /// 头部运动数据源抽象：真实 AirPods 或 Mock
 protocol MotionProvider: AnyObject, Sendable {
     /// 原始头部姿态（度），回调线程不保证主线程
@@ -12,6 +32,8 @@ protocol MotionProvider: AnyObject, Sendable {
     var authorizationDenied: Bool { get }
     /// 低功耗模式：2s 才上报一次（非番茄钟时段）
     var lowPower: Bool { get set }
+    /// 以下一帧为相对参考零点（校准时调用；参考系离佩戴姿态太远会导致 Euler 轴耦合）
+    func resetReference()
     func start()
     func stop()
 }
@@ -39,11 +61,59 @@ final class HeadphoneMotionProvider: NSObject, MotionProvider, CMHeadphoneMotion
     private(set) var authorizationDenied = false
     private var lastPush = Date.distantPast
     private let lock = NSLock()
+    /// --logpose 调试：见 PoseDebugLog
+    private let logPose = PoseDebugLog.enabled
+    /// 参考帧 + 解剖学三轴（参考帧 = 校准时设备系）：
+    /// 绝对参考系下戴着的 AirPods roll≈84°，直接读 Euler 轴间耦合严重；改为相对参考帧的旋转，
+    /// 再投影到解剖学三轴：up=重力反方向（逐次校准实测）、lateral=点头轴（AirPods Pro 实测常量，
+    /// 不同型号/佩戴可能差 ±15°，游戏阈值对此不敏感）、forward=up×lateral。跨线程读写走 lock
+    private var _reference: (q: CMQuaternion, up: V3, lateral: V3, forward: V3)?
+    private var reference: (q: CMQuaternion, up: V3, lateral: V3, forward: V3)? {
+        get { lock.lock(); defer { lock.unlock() }; return _reference }
+        set { lock.lock(); _reference = newValue; lock.unlock() }
+    }
+
+    /// AirPods Pro 实测点头轴（设备系，粗略）：左耳→右耳方向
+    private static let lateralRaw = V3(x: -0.81, y: -0.42, z: 0.41)
+
+    private struct V3 {
+        var x, y, z: Double
+        func dot(_ o: V3) -> Double { x * o.x + y * o.y + z * o.z }
+        func cross(_ o: V3) -> V3 { V3(x: y * o.z - z * o.y, y: z * o.x - x * o.z, z: x * o.y - y * o.x) }
+        var normalized: V3 { let l = (x * x + y * y + z * z).squareRoot(); return V3(x: x / l, y: y / l, z: z / l) }
+        func minus(_ o: V3) -> V3 { V3(x: x - o.x, y: y - o.y, z: z - o.z) }
+        func scaled(_ s: Double) -> V3 { V3(x: x * s, y: y * s, z: z * s) }
+    }
+
+    func resetReference() { reference = nil }
+
+    /// q_rel = ref⁻¹ ⊗ cur（单位四元数逆 = 共轭）
+    private static func relative(_ cur: CMQuaternion, to ref: CMQuaternion) -> CMQuaternion {
+        let a = CMQuaternion(x: -ref.x, y: -ref.y, z: -ref.z, w: ref.w)
+        let b = cur
+        return CMQuaternion(
+            x: a.w * b.x + a.x * b.w + a.y * b.z - a.z * b.y,
+            y: a.w * b.y - a.x * b.z + a.y * b.w + a.z * b.x,
+            z: a.w * b.z + a.x * b.y - a.y * b.x + a.z * b.w,
+            w: a.w * b.w - a.x * b.x - a.y * b.y - a.z * b.z)
+    }
+
+    /// 相对四元数 → 解剖学三轴角（度，转轴在参考帧系）：
+    /// yaw 绕 up：+ = 左转；pitch 绕 lateral：- = 低头（保持既有约定）；roll 绕 forward：+ = 左侧倾
+    private static func anatomicalDegrees(_ q: CMQuaternion, up: V3, lateral: V3, forward: V3)
+        -> (pitch: Double, yaw: Double, roll: Double) {
+        let v = V3(x: q.x, y: q.y, z: q.z)
+        let yaw = 2 * atan2(v.dot(up), q.w) * 180 / .pi
+        let pitch = -2 * atan2(v.dot(lateral), q.w) * 180 / .pi
+        let roll = 2 * atan2(v.dot(forward), q.w) * 180 / .pi
+        return (pitch, yaw, roll)
+    }
 
     func start() {
         let status = CMHeadphoneMotionManager.authorizationStatus()
         authorizationDenied = (status == .denied || status == .restricted)
         guard !authorizationDenied, manager.isDeviceMotionAvailable else { return }
+        reference = nil   // 重新启动即重取参考帧（配合 PostureMonitor 重启重校准）
         // delegate 需在主线程设置（连接/断开会话回调走主线程）
         Task { @MainActor in self.manager.delegate = self }
         manager.startDeviceMotionUpdates(to: queue) { [weak self] motion, _ in
@@ -56,11 +126,25 @@ final class HeadphoneMotionProvider: NSObject, MotionProvider, CMHeadphoneMotion
                 self.lock.unlock()
                 if tooSoon { return }
             }
-            let attitude = motion.attitude
-            let pose = HeadPose(pitch: attitude.pitch * 180 / .pi,
-                                yaw: attitude.yaw * 180 / .pi,
-                                roll: attitude.roll * 180 / .pi)
-            self.onUpdate?(pose)
+            let q = motion.attitude.quaternion
+            if self.reference == nil {
+                // 以当前帧为参考：up = 重力反方向；lateral 对 up 正交化；forward = up × lateral
+                let g = motion.gravity
+                let up = V3(x: -g.x, y: -g.y, z: -g.z).normalized
+                let l0 = Self.lateralRaw
+                let lateral = l0.minus(up.scaled(l0.dot(up))).normalized
+                self.reference = (q, up, lateral, up.cross(lateral))
+            }
+            guard let ref = self.reference else { return }
+            let rel = Self.relative(q, to: ref.q)
+            // --logpose 调试：真机轴映射排查，记录相对四元数 + 重力向量（离线算转轴用）
+            if self.logPose {
+                let g = motion.gravity
+                PoseDebugLog.write(String(format: "q w=% .4f x=% .4f y=% .4f z=% .4f g x=% .3f y=% .3f z=% .3f\n",
+                                          rel.w, rel.x, rel.y, rel.z, g.x, g.y, g.z))
+            }
+            let e = Self.anatomicalDegrees(rel, up: ref.up, lateral: ref.lateral, forward: ref.forward)
+            self.onUpdate?(HeadPose(pitch: e.pitch, yaw: e.yaw, roll: e.roll))
         }
     }
 
@@ -86,6 +170,8 @@ final class MockMotionProvider: MotionProvider, @unchecked Sendable {
     var onConnection: (@Sendable (Bool) -> Void)?
     var lowPower = true   // mock 忽略低功耗（开发预览始终全速波形）
     let authorizationDenied = false
+
+    func resetReference() {}   // mock 波形自带零点，无需参考帧
 
     private var task: Task<Void, Never>?
     private let monsterLock = NSLock()

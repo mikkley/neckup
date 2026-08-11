@@ -108,7 +108,8 @@ public struct TwinBeetleGame: Sendable {
             idleHintShown = false
         }
 
-        let matched = side != 0 && ((side < 0 && yaw < -1) || (side > 0 && yaw > 1))
+        // yaw 左转为正（真机实测）：怪在左（side<0）→ 左转（yaw>0）格挡
+        let matched = side != 0 && ((side < 0 && yaw > 1) || (side > 0 && yaw < -1))
         let aimed = matched && abs(yaw) >= Self.blockAngle
         yawProgress = matched ? min(abs(yaw) / Self.blockAngle, 1) : 0
 

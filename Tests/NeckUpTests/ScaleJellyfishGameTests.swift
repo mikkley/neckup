@@ -4,18 +4,18 @@ import XCTest
 final class ScaleJellyfishGameTests: XCTestCase {
     private let t0 = Date(timeIntervalSince1970: 1_000_000)
 
-    /// 缓慢右侧屈到 27°（1s 斜坡 ≈27°/s），随后持续保持 frames 帧
+    /// 缓慢右侧屈到 -27°（1s 斜坡 ≈27°/s；roll 左侧倾为正，右屈喂负值），随后持续保持 frames 帧
     private func tiltRightAndHold(_ game: inout ScaleJellyfishGame, at start: Date,
                                   holdFrames: Int) -> (Date, [ScaleJellyfishGame.Event]) {
         var t = start
         var all: [ScaleJellyfishGame.Event] = []
         for i in 1...25 {
             t = t.addingTimeInterval(0.04)
-            all += game.update(pose: HeadPose(pitch: 0, roll: 27.0 * Double(i) / 25), at: t)
+            all += game.update(pose: HeadPose(pitch: 0, roll: -27.0 * Double(i) / 25), at: t)
         }
         for _ in 0..<holdFrames {
             t = t.addingTimeInterval(0.04)
-            all += game.update(pose: HeadPose(pitch: 0, roll: 27), at: t)
+            all += game.update(pose: HeadPose(pitch: 0, roll: -27), at: t)
         }
         return (t, all)
     }
@@ -64,7 +64,7 @@ final class ScaleJellyfishGameTests: XCTestCase {
         let t = t0.addingTimeInterval(1.0)
         _ = game.update(pose: HeadPose(pitch: 0, roll: 0), at: t)   // 建立速度基准
         let t2 = t.addingTimeInterval(0.04)
-        let events = game.update(pose: HeadPose(pitch: 0, roll: 27), at: t2)
+        let events = game.update(pose: HeadPose(pitch: 0, roll: -27), at: t2)
         XCTAssertTrue(events.contains(.tooFast))
         XCTAssertEqual(game.snapshot(at: t2).message, "慢一点 🐢")
     }

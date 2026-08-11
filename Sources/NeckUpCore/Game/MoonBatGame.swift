@@ -112,7 +112,8 @@ public struct MoonBatGame: Sendable {
             idleHintShown = false
         }
 
-        let yawMatch = batSide != 0 && ((batSide < 0 && yaw < -1) || (batSide > 0 && yaw > 1))
+        // yaw 左转为正（真机实测）：蝙蝠在左（batSide<0）→ 左转（yaw>0）瞄准
+        let yawMatch = batSide != 0 && ((batSide < 0 && yaw > 1) || (batSide > 0 && yaw < -1))
         let inZone = batActive && !batFalling && yawMatch
             && pitchDown >= Self.pitchMin && pitchDown <= Self.pitchMax
             && abs(yaw) >= Self.yawMin && abs(yaw) <= Self.yawMax

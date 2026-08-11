@@ -67,6 +67,7 @@ final class PostureMonitor: ObservableObject {
     func start() {
         permissionDenied = provider.authorizationDenied
         guard isMonitoring else { return }
+        recalibrate()   // provider 重启会重取参考帧，旧零点作废
         provider.start()
         started = true
         permissionDenied = provider.authorizationDenied
@@ -77,10 +78,11 @@ final class PostureMonitor: ObservableObject {
         started = false
     }
 
-    /// 重新校准：以下一帧姿态为零点
+    /// 重新校准：以下一帧姿态为零点（同时重置传感器参考帧，保证相对旋转落在 Euler 稳定区）
     func recalibrate() {
         calibration = nil
         window.removeAll()
+        provider.resetReference()
     }
 
     /// 番茄钟专注期用 25Hz 全速，其余时段低功耗 0.5Hz

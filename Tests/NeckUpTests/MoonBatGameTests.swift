@@ -4,7 +4,7 @@ import XCTest
 final class MoonBatGameTests: XCTestCase {
     private let t0 = Date(timeIntervalSince1970: 1_000_000)
 
-    /// 推进到首只蝙蝠出现（side = +1，低头+右转瞄准）
+    /// 推进到首只蝙蝠出现（side = +1，低头+右转瞄准；yaw 左转为正，右转喂负值）
     private func spawnFirstBat(_ game: inout MoonBatGame) -> Date {
         let t = t0.addingTimeInterval(MoonBatGame.firstGap + 0.1)
         _ = game.tick(at: t)
@@ -31,7 +31,7 @@ final class MoonBatGameTests: XCTestCase {
     func testAimAndStableHits() {
         var game = MoonBatGame(monster: .moonBat, startAt: t0)
         let t = spawnFirstBat(&game)
-        let (tEnd, events) = aim(&game, yaw: 20, at: t, holdFrames: 40)
+        let (tEnd, events) = aim(&game, yaw: -20, at: t, holdFrames: 40)
         XCTAssertTrue(events.contains(.lockOn))
         XCTAssertTrue(events.contains(.arrowHit(combo: 1)))
         XCTAssertTrue(events.contains { if case .ratchetClick = $0 { true } else { false } })
@@ -45,7 +45,7 @@ final class MoonBatGameTests: XCTestCase {
     func testWrongSideNoLock() {
         var game = MoonBatGame(monster: .moonBat, startAt: t0)
         let t = spawnFirstBat(&game)
-        let (tEnd, events) = aim(&game, yaw: -20, at: t, holdFrames: 100)   // 覆盖整个飞行窗口
+        let (tEnd, events) = aim(&game, yaw: 20, at: t, holdFrames: 100)   // 覆盖整个飞行窗口
         XCTAssertFalse(events.contains(.lockOn))
         XCTAssertFalse(events.contains { if case .arrowHit = $0 { true } else { false } })
         let snap = game.snapshot(at: tEnd)
@@ -59,7 +59,7 @@ final class MoonBatGameTests: XCTestCase {
         let t = spawnFirstBat(&game)
         _ = game.update(pose: HeadPose(pitch: 0, yaw: 0), at: t)   // 建立速度基准
         let t2 = t.addingTimeInterval(0.04)
-        let events = game.update(pose: HeadPose(pitch: -15, yaw: 20), at: t2)
+        let events = game.update(pose: HeadPose(pitch: -15, yaw: -20), at: t2)
         XCTAssertTrue(events.contains(.tooFast))
         XCTAssertFalse(events.contains { if case .arrowHit = $0 { true } else { false } })
         let snap = game.snapshot(at: t2)

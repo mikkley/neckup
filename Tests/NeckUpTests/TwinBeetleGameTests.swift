@@ -11,17 +11,17 @@ final class TwinBeetleGameTests: XCTestCase {
         return t
     }
 
-    /// 缓慢右转：0→32° 用时 1.2s（≈26.7°/s），再保持 2s
+    /// 缓慢右转：0→-32° 用时 1.2s（≈26.7°/s），再保持 2s（yaw 左转为正，右转为负）
     private func slowTurnRight(_ game: inout TwinBeetleGame, at start: Date) -> (Date, [TwinBeetleGame.Event]) {
         var t = start
         var all: [TwinBeetleGame.Event] = []
         for i in 1...30 {
             t = t.addingTimeInterval(0.04)
-            all += game.update(pose: HeadPose(pitch: 0, yaw: 32.0 * Double(i) / 30), at: t)
+            all += game.update(pose: HeadPose(pitch: 0, yaw: -32.0 * Double(i) / 30), at: t)
         }
         for _ in 1...50 {
             t = t.addingTimeInterval(0.04)
-            all += game.update(pose: HeadPose(pitch: 0, yaw: 32), at: t)
+            all += game.update(pose: HeadPose(pitch: 0, yaw: -32), at: t)
         }
         return (t, all)
     }
@@ -61,7 +61,7 @@ final class TwinBeetleGameTests: XCTestCase {
         let t = enterTelegraph(&game)
         _ = game.update(pose: HeadPose(pitch: 0, yaw: 0), at: t)   // 建立速度基准
         let t2 = t.addingTimeInterval(0.04)
-        let events = game.update(pose: HeadPose(pitch: 0, yaw: 32), at: t2)
+        let events = game.update(pose: HeadPose(pitch: 0, yaw: -32), at: t2)
         XCTAssertTrue(events.contains(.tooFast))
         XCTAssertFalse(events.contains { if case .blockHit = $0 { true } else { false } })
         let snap = game.snapshot(at: t2)
