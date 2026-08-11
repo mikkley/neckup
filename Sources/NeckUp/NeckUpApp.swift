@@ -6,20 +6,19 @@ struct NeckUpApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
     var body: some Scene {
-        // 主体是灵动岛（AppKit NSPanel），这里只挂设置场景
+        // 主体是灵动岛（AppKit NSPanel），这里只挂设置场景；
+        // appState 在 AppDelegate 初始化时已创建，body 求值必能拿到
         SwiftUI.Settings {
-            if let state = appDelegate.appState {
-                SettingsView()
-                    .environmentObject(state.settings)
-                    .environmentObject(state.monitor)
-            }
+            SettingsView()
+                .environmentObject(appDelegate.appState.settings)
+                .environmentObject(appDelegate.appState.monitor)
         }
     }
 }
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
-    private(set) var appState: AppState?
+    let appState = AppState()
     private var statusBar: StatusBarController?
     private var panelManager: NotchPanelManager?
 
@@ -27,13 +26,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // 菜单栏常驻，不出现在 Dock
         NSApp.setActivationPolicy(.accessory)
 
-        let state = AppState()
-        appState = state
-        statusBar = StatusBarController(state: state)
-        panelManager = NotchPanelManager(state: state)
-        state.start()
+        statusBar = StatusBarController(state: appState)
+        panelManager = NotchPanelManager(state: appState)
+        appState.start()
         // --quick 调试：自动开始番茄钟，快速进入休息段验证游戏全流程
-        if ProcessInfo.processInfo.arguments.contains("--quick") { state.pomodoro.start() }
+        if ProcessInfo.processInfo.arguments.contains("--quick") { appState.pomodoro.start() }
 
         // 系统通知授权（提醒降级 / 番茄钟结束用）
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
@@ -41,6 +38,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     /// 退出前强制落盘：统计 throttle 缓冲（最多 9 条）不丢
     func applicationWillTerminate(_ notification: Notification) {
-        appState?.stats.flush()
+        appState.stats.flush()
     }
 }

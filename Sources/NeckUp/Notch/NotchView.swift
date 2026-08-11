@@ -161,26 +161,26 @@ struct NotchView: View {
             }
             .font(.callout)
 
-            Text("小球跟着头动，居中就是坐直了")
-                .font(.caption2)
-                .foregroundStyle(.tertiary)
-
             if monitor.permissionDenied {
-                // 无权限时监测/校准都无意义：引导行替换控制行，避免内容溢出卡片
+                // 无权限：引导行替换提示行（控制行保留——番茄钟不依赖传感器）
                 permissionGuide
             } else {
-                HStack(spacing: 8) {
-                    pomodoroControls
-                    Spacer()
-                    Button(monitor.isMonitoring ? "暂停监测" : "继续监测") {
-                        monitor.isMonitoring.toggle()
-                    }
-                    .buttonStyle(.bordered)
-                    Button("坐直校准") { monitor.recalibrate() }
-                        .buttonStyle(.bordered)
-                }
-                .controlSize(.small)
+                Text("小球跟着头动，居中就是坐直了")
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
             }
+
+            HStack(spacing: 8) {
+                pomodoroControls
+                Spacer()
+                Button(monitor.isMonitoring ? "暂停监测" : "继续监测") {
+                    monitor.isMonitoring.toggle()
+                }
+                .buttonStyle(.bordered)
+                Button("坐直校准") { monitor.recalibrate() }
+                    .buttonStyle(.bordered)
+            }
+            .controlSize(.small)
         }
         .padding(.horizontal, 20)
         .padding(.top, 8)
