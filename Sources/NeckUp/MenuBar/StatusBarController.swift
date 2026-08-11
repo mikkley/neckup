@@ -6,9 +6,11 @@ final class StatusBarController: NSObject {
     private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
     private let state: AppState
     private let menu = NSMenu()
+    private let settingsWindow: SettingsWindowController
 
     init(state: AppState) {
         self.state = state
+        settingsWindow = SettingsWindowController(state: state)
         super.init()
         statusItem.button?.image = NSImage(systemSymbolName: "tortoise.fill", accessibilityDescription: "NeckUp")
         menu.delegate = self
@@ -57,11 +59,7 @@ final class StatusBarController: NSObject {
     }
 
     @objc private func openSettings() {
-        NSApp.activate(ignoringOtherApps: true)
-        // macOS 13+ 为 showSettingsWindow:，旧名 showPreferencesWindow: 兜底
-        if !NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil) {
-            NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil)
-        }
+        settingsWindow.show()
     }
 
     @objc private func quit() {

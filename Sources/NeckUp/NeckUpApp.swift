@@ -1,17 +1,17 @@
-import SwiftUI
+import AppKit
 import UserNotifications
 
+/// 纯 AppKit 入口：岛是 NSPanel、设置是手动托管 NSWindow，
+/// 不走 SwiftUI 场景生命周期（accessory 应用上 Settings 场景的 showSettingsWindow: 不可靠）
 @main
-struct NeckUpApp: App {
-    @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
-
-    var body: some Scene {
-        // 主体是灵动岛（AppKit NSPanel），这里只挂设置场景；
-        // appState 在 AppDelegate 初始化时已创建，body 求值必能拿到
-        SwiftUI.Settings {
-            SettingsView()
-                .environmentObject(appDelegate.appState.settings)
-                .environmentObject(appDelegate.appState.monitor)
+enum NeckUpMain {
+    static func main() {
+        // @main 的 main 一定跑在主线程；AppDelegate 是 @MainActor
+        MainActor.assumeIsolated {
+            let delegate = AppDelegate()
+            NSApplication.shared.delegate = delegate
+            // run() 永不返回，withExtendedLifetime 借此保住 delegate（delegate 是弱引用）
+            withExtendedLifetime(delegate) { NSApplication.shared.run() }
         }
     }
 }

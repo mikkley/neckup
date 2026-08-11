@@ -16,6 +16,8 @@ final class NotchPanel: NSPanel {
         hidesOnDeactivate = false
         isReleasedWhenClosed = false
         acceptsMouseMovedEvents = true   // SwiftUI onHover 需要
+        // 岛永远是深色主题：强制深色外观，否则浅色模式下默认/次要色文字是深色，在黑底上隐形
+        appearance = NSAppearance(named: .darkAqua)
     }
 
     override var canBecomeKey: Bool { false }
