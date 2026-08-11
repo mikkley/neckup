@@ -27,7 +27,10 @@ struct NotchView: View {
         .background(islandBackground)
         .onHover { appState.hoverChanged($0) }
         .onTapGesture { appState.toggleLockExpand() }
-        .onAppear { breathing = true }
+        .onAppear {
+            breathing = true
+            pulsing = (appState.islandState == .reminder)   // 启动即提醒态时脉冲也要起
+        }
         .onChange(of: appState.islandState) { _, s in
             pulsing = (s == .reminder)
         }
@@ -102,6 +105,7 @@ struct NotchView: View {
 
     /// 左侧状态小字（零学习：直接说状态，不给数字）
     private var postureWord: String {
+        if appState.islandState == .game { return "" }   // 对局中不显示（评估豁免期，避免陈旧文案）
         if !monitor.isMonitoring { return "已暂停" }
         if !monitor.isWearing { return "未佩戴" }
         switch monitor.status {

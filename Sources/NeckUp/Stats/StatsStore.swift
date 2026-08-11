@@ -67,12 +67,17 @@ final class StatsStore: ObservableObject {
         today = summaries[Self.todayKey] ?? DaySummary(date: Self.todayKey)
     }
 
-    /// 每秒由 PostureMonitor 回调一条聚合样本
-    func recordSample(pitch: Double, isBad: Bool) {
+    /// 每秒由 PostureMonitor 回调一条聚合样本；seconds 为距上条样本的实际时长（低功耗下 >1s）
+    func recordSample(pitch: Double, isBad: Bool, seconds: Double = 1) {
         rollDayIfNeeded()
         todaySamples.append(PostureSample(timestamp: Date(), pitchDeg: pitch, isBadPosture: isBad))
-        if isBad { today.badPostureSec += 1 } else { today.goodPostureSec += 1 }
+        if isBad { today.badPostureSec += seconds } else { today.goodPostureSec += seconds }
         saveThrottled()
+    }
+
+    /// 退出前强制落盘，throttle 缓冲不丢（AppDelegate.applicationWillTerminate 调用）
+    func flush() {
+        saveThrottled(force: true)
     }
 
     func recordSlouch() {

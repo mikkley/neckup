@@ -63,9 +63,9 @@ final class AppState: ObservableObject {
             self?.codex.setZenMode(on)
         }.store(in: &cancellables)
 
-        // 每秒姿势样本 → 统计
-        monitor.onSample = { [weak stats] pitch, isBad in
-            stats?.recordSample(pitch: pitch, isBad: isBad)
+        // 每秒姿势样本 → 统计（带实际间隔加权）
+        monitor.onSample = { [weak stats] pitch, isBad, seconds in
+            stats?.recordSample(pitch: pitch, isBad: isBad, seconds: seconds)
         }
         monitor.onSlouch = { [weak stats] in
             stats?.recordSlouch()

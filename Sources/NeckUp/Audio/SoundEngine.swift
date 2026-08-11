@@ -81,7 +81,8 @@ final class SoundEngine {
     /// 蓄力进度更新（0~1）：惰性启动循环音，rate 随进度上行（音高 0.8x→1.7x）；
     /// 变化 ≥2% 才调 rate（10Hz 级节流，避免爆音）
     func updateCharge(progress: Double) {
-        guard settings.soundEnabled else { return }
+        // 静音时若蓄力音在播，立即停（菜单静音实时生效）
+        guard settings.soundEnabled else { stopCharge(); return }
         let p = min(max(progress, 0), 1)
         if chargeNode == nil { startChargeNode() }
         guard let node = chargeNode, abs(p - chargeLevel) >= 0.02 else { return }

@@ -29,7 +29,12 @@ final class HeadphoneMotionProvider: NSObject, MotionProvider, CMHeadphoneMotion
 
     var onUpdate: (@Sendable (HeadPose) -> Void)?
     var onConnection: (@Sendable (Bool) -> Void)?
-    var lowPower = false
+    /// 低功耗默认开：启动即 0.5Hz，番茄钟/对局才升 25Hz；主线程写、motion 队列读，走锁
+    var lowPower: Bool {
+        get { lock.lock(); defer { lock.unlock() }; return _lowPower }
+        set { lock.lock(); _lowPower = newValue; lock.unlock() }
+    }
+    private var _lowPower = true
 
     private(set) var authorizationDenied = false
     private var lastPush = Date.distantPast
@@ -79,7 +84,7 @@ final class HeadphoneMotionProvider: NSObject, MotionProvider, CMHeadphoneMotion
 final class MockMotionProvider: MotionProvider, @unchecked Sendable {
     var onUpdate: (@Sendable (HeadPose) -> Void)?
     var onConnection: (@Sendable (Bool) -> Void)?
-    var lowPower = false
+    var lowPower = true   // mock 忽略低功耗（开发预览始终全速波形）
     let authorizationDenied = false
 
     private var task: Task<Void, Never>?

@@ -69,7 +69,11 @@ final class StatusBarController: NSObject {
 extension StatusBarController: NSMenuDelegate {
     /// 打开菜单时按当前状态刷新文案
     func menuWillOpen(_ menu: NSMenu) {
-        menu.items[0].title = state.islandState == .expanded ? "收起灵动岛" : "展开灵动岛"
+        switch state.islandState {
+        case .expanded: menu.items[0].title = "收起灵动岛"
+        case .game: menu.items[0].title = "结束本局"   // 游戏态点击 = 收回本局
+        default: menu.items[0].title = "展开灵动岛"
+        }
         menu.items[1].title = state.monitor.isMonitoring ? "暂停监测" : "继续监测"
         menu.items[2].title = state.pomodoro.phase == .idle ? "开始番茄钟" : "停止番茄钟"
         menu.items[4].title = state.settings.soundEnabled ? "静音音效" : "恢复音效"

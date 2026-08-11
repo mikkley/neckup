@@ -19,8 +19,8 @@ final class PostureMonitor: ObservableObject {
         didSet { applyMonitoringState() }
     }
 
-    /// 每秒聚合回调（pitch, isBad）→ StatsStore
-    var onSample: ((Double, Bool) -> Void)?
+    /// 聚合回调（pitch, isBad, 距上条样本的实际秒数）→ StatsStore
+    var onSample: ((Double, Bool, Double) -> Void)?
     /// 触发一次提醒（记一次低头事件）
     var onSlouch: (() -> Void)?
     /// 提醒态变化 → 驱动岛三态
@@ -31,7 +31,7 @@ final class PostureMonitor: ObservableObject {
     private let provider: MotionProvider
     private let settings: AppSettings
     private var calibration: HeadPose?
-    private var window: [Double] = []          // 1s 滑动窗口（25Hz ≈ 25 个样本）
+    private var window: [(at: Date, pitch: Double)] = []   // 最近 1s 时间窗（任意采样率下都准确）
     private var badSince: Date?
     private var goodSince: Date?
     private var reminderShownAt: Date?
@@ -91,6 +91,7 @@ final class PostureMonitor: ObservableObject {
             if !started { start() } else { provider.start() }
         } else {
             provider.stop()
+            started = false   // 重开时走 start() 全量路径：刷新权限状态（系统设置里授权后即时生效）
             isBadPosture = false
             exitReminder()
         }
@@ -132,15 +133,16 @@ final class PostureMonitor: ObservableObject {
                                 yaw: pose.yaw - c.yaw,
                                 roll: pose.roll - c.roll)
         onRawPose?(adjusted)   // 校准后未平滑 → 游戏
-        window.append(adjusted.pitch)
-        if window.count > 25 { window.removeFirst(window.count - 25) }
-        pitchDeg = window.reduce(0, +) / Double(window.count)
-        evaluate()
-        // 每秒聚合一条样本（对局期间不计：做颈椎操不算低头）
         let now = Date()
+        window.append((now, adjusted.pitch))
+        window.removeAll { now.timeIntervalSince($0.at) > 1 }
+        pitchDeg = window.reduce(0) { $0 + $1.pitch } / Double(window.count)
+        evaluate()
+        // 每秒聚合一条样本，按实际间隔加权（低功耗 0.5Hz 下不再少计时长；对局期间不计）
         if !gameActive, now.timeIntervalSince(lastSampleRecordAt) >= 1 {
+            let elapsed = lastSampleRecordAt == .distantPast ? 1 : min(now.timeIntervalSince(lastSampleRecordAt), 5)
             lastSampleRecordAt = now
-            onSample?(pitchDeg, isBadPosture)
+            onSample?(pitchDeg, isBadPosture, elapsed)
         }
     }
 

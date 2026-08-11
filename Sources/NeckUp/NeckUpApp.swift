@@ -38,4 +38,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // 系统通知授权（提醒降级 / 番茄钟结束用）
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
     }
+
+    /// 退出前强制落盘：统计 throttle 缓冲（最多 9 条）不丢
+    func applicationWillTerminate(_ notification: Notification) {
+        appState?.stats.flush()
+    }
 }
