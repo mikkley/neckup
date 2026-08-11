@@ -38,6 +38,17 @@ struct SettingsView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
+            Section("定时活动") {
+                Picker("活动提醒", selection: $settings.breakIntervalMin) {
+                    Text("关闭").tag(0.0)
+                    Text("每 30 分钟").tag(30.0)
+                    Text("每 45 分钟").tag(45.0)
+                    Text("每 60 分钟").tag(60.0)
+                }
+                Text("不用番茄钟也能定时活动：到点开一局打怪（游戏已关闭则只发通知）。番茄钟运行期间自动让位。")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
             Section("灵动岛") {
                 Picker("显示在", selection: $settings.displayID) {
                     Text("自动（刘海屏优先）").tag("")
@@ -55,6 +66,6 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .frame(width: 420, height: 360)
+        .frame(width: 420, height: 440)
     }
 }

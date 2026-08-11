@@ -12,6 +12,7 @@ final class AppSettings: ObservableObject {
         static let game = "gameEnabled"
         static let zen = "zenMode"
         static let display = "displayID"
+        static let breakInterval = "breakIntervalMin"
     }
 
     @Published var thresholdDeg: Double { didSet { defaults.set(thresholdDeg, forKey: Keys.threshold) } }
@@ -26,6 +27,8 @@ final class AppSettings: ObservableObject {
     @Published var zenMode: Bool { didSet { defaults.set(zenMode, forKey: Keys.zen) } }
     /// 灵动岛停靠的显示器（CGDirectDisplayID 字符串，空 = 自动：刘海屏优先）
     @Published var displayID: String { didSet { defaults.set(displayID, forKey: Keys.display) } }
+    /// 定时活动提醒间隔（分钟，0 = 关闭；独立于番茄钟）
+    @Published var breakIntervalMin: Double { didSet { defaults.set(breakIntervalMin, forKey: Keys.breakInterval) } }
 
     private let defaults = UserDefaults.standard
 
@@ -38,6 +41,7 @@ final class AppSettings: ObservableObject {
             Keys.mock: false,
             Keys.game: true,
             Keys.zen: false,
+            Keys.breakInterval: 0.0,
         ])
         thresholdDeg = defaults.double(forKey: Keys.threshold)
         sustainedSec = defaults.double(forKey: Keys.sustained)
@@ -47,6 +51,7 @@ final class AppSettings: ObservableObject {
         gameEnabled = defaults.bool(forKey: Keys.game)
         zenMode = defaults.bool(forKey: Keys.zen)
         displayID = defaults.string(forKey: Keys.display) ?? ""
+        breakIntervalMin = defaults.double(forKey: Keys.breakInterval)
     }
 
     /// 是否请求 mock 数据：`--mock` 启动参数 或 设置开关

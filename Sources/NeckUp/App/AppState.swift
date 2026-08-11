@@ -36,6 +36,7 @@ final class AppState: ObservableObject {
     private var game: ActiveGame?
     private var mock: MockMotionProvider?
     private var gameLoopTask: Task<Void, Never>?
+    private var breakTask: Task<Void, Never>?
     private var cancellables: Set<AnyCancellable> = []
 
     init() {
@@ -109,10 +110,44 @@ final class AppState: ObservableObject {
                 self.startGame()
             }
         }.store(in: &cancellables)
+
+        // 定时活动提醒（独立于番茄钟）：间隔变化 → 重排计时
+        settings.$breakIntervalMin.dropFirst().sink { [weak self] _ in
+            self?.rescheduleBreakReminder()
+        }.store(in: &cancellables)
+        rescheduleBreakReminder()
     }
 
     func start() {
         monitor.start()
+    }
+
+    // MARK: 定时活动提醒（独立于番茄钟）
+
+    private func rescheduleBreakReminder() {
+        breakTask?.cancel()
+        breakTask = nil
+        let minutes = settings.breakIntervalMin
+        guard minutes > 0 else { return }
+        breakTask = Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(nanoseconds: UInt64(minutes * 60) * 1_000_000_000)
+                guard let self, !Task.isCancelled else { return }
+                self.fireBreakReminder()
+            }
+        }
+    }
+
+    /// 到点：番茄钟运行中（休息段自有安排）/对局中/未佩戴/已暂停 → 跳过本轮；
+    /// 游戏开 → 直接开一局；游戏关 → 只发系统通知，不打扰岛
+    private func fireBreakReminder() {
+        guard pomodoro.phase == .idle, game == nil,
+              monitor.isMonitoring, monitor.isWearing else { return }
+        if settings.gameEnabled {
+            startGame()
+        } else {
+            Notifier.send(title: "NeckUp", body: "坐了很久啦，起来活动一下脖子吧")
+        }
     }
 
     // MARK: 游戏编排（洗牌式遭遇，五只怪轮换，设计文档 §5.1）
