@@ -1,3 +1,6 @@
 .build/
 *.app
 .DS_Store
+
+# 调研存档不公开（仅本地保留）
+docs/research-gamification.md
