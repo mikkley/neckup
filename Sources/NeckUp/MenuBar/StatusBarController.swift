@@ -25,6 +25,13 @@ final class StatusBarController: NSObject {
         addItem("退出 NeckUp", action: #selector(quit))
 
         statusItem.menu = menu
+
+        // 岛展开态的齿轮按钮 → 打开设置（与菜单栏「设置…」同一入口）
+        NotificationCenter.default.addObserver(
+            forName: .neckUpShowSettings, object: nil, queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in self?.openSettings() }
+        }
     }
 
     private func addItem(_ title: String, action: Selector) {

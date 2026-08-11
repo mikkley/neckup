@@ -4,6 +4,8 @@ import SwiftUI
 extension Notification.Name {
     /// 设置页「重新打开新手指引」→ AppDelegate 弹出引导窗口
     static let neckUpShowOnboarding = Notification.Name("NeckUpShowOnboarding")
+    /// 岛展开态齿轮按钮 → StatusBarController 打开设置窗口
+    static let neckUpShowSettings = Notification.Name("NeckUpShowSettings")
 }
 
 /// 新手引导窗口：手动托管（与设置窗口同模式）；首次启动自动弹出

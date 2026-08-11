@@ -163,10 +163,23 @@ struct NotchView: View {
                 Spacer(minLength: 0)
                 Text(dayStatusWord)
                     .foregroundStyle(dayStatusColor)
-                // 姿态镜像小人：比水平仪直观，转头/低头/侧倾都能看出来
-                HeadAvatar(pose: monitor.headPose)
-                    .frame(width: 56, height: 56)
-                    .background(.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                VStack(spacing: 2) {
+                    // 设置入口（与菜单栏「设置…」等效），放在角落不抢信息
+                    Button {
+                        NotificationCenter.default.post(name: .neckUpShowSettings, object: nil)
+                    } label: {
+                        Image(systemName: "gearshape")
+                            .font(.system(size: 11))
+                            .foregroundStyle(.white.opacity(0.45))
+                            .frame(width: 22, height: 14)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    // 姿态镜像小人：比水平仪直观，转头/低头/侧倾都能看出来
+                    HeadAvatar(pose: monitor.headPose)
+                        .frame(width: 48, height: 48)
+                        .background(.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                }
             }
             .font(.callout)
 
