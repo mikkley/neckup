@@ -21,6 +21,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let appState = AppState()
     private var statusBar: StatusBarController?
     private var panelManager: NotchPanelManager?
+    private var onboarding: OnboardingWindowController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // 菜单栏常驻，不出现在 Dock
@@ -31,6 +32,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         appState.start()
         // --quick 调试：自动开始番茄钟，快速进入休息段验证游戏全流程
         if ProcessInfo.processInfo.arguments.contains("--quick") { appState.pomodoro.start() }
+
+        // 新手引导：首次启动自动弹出；设置页可重新打开
+        let onboarding = OnboardingWindowController(state: appState)
+        self.onboarding = onboarding
+        NotificationCenter.default.addObserver(
+            forName: .neckUpShowOnboarding, object: nil, queue: .main
+        ) { _ in
+            Task { @MainActor in onboarding.show() }
+        }
+        if !UserDefaults.standard.bool(forKey: "neckUpOnboardingDone") {
+            onboarding.show()
+        }
 
         // 系统通知授权（提醒降级 / 番茄钟结束用）
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }

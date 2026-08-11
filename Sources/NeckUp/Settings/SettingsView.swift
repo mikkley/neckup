@@ -56,6 +56,9 @@ struct SettingsView: View {
                         Text(screen.localizedName).tag(NotchGeometry.displayID(of: screen))
                     }
                 }
+                Button("重新打开新手指引") {
+                    NotificationCenter.default.post(name: .neckUpShowOnboarding, object: nil)
+                }
             }
             Section("传感器") {
                 Button("坐直后点此校准") { monitor.recalibrate() }

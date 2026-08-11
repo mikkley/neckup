@@ -1,0 +1,262 @@
+import CoreMotion
+import NeckUpCore
+import SwiftUI
+
+/// 新手引导：欢迎 → 权限 → 校准试动（像素人头跟随）→ 游戏与提醒设置
+struct OnboardingView: View {
+    @EnvironmentObject var settings: AppSettings
+    @EnvironmentObject var monitor: PostureMonitor
+
+    /// 完成后回调（窗口控制器关闭窗口）
+    let onFinish: () -> Void
+
+    @State private var step = 0
+    @State private var calibrated = false
+    @State private var authStatus = CMHeadphoneMotionManager.authorizationStatus()
+    private let authPoller = Timer.publish(every: 0.5, on: .main, in: .common).autoconnect()
+
+    /// 灵敏度三档 ↔ 内部阈值角度（与设置页同一映射）
+    private var sensitivity: Binding<Int> {
+        Binding(
+            get: { settings.thresholdDeg >= -10 ? 0 : (settings.thresholdDeg <= -20 ? 2 : 1) },
+            set: { settings.thresholdDeg = [-10.0, -15.0, -20.0][$0] }
+        )
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            Group {
+                switch step {
+                case 0: welcomePage
+                case 1: permissionPage
+                case 2: calibratePage
+                default: gamePage
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+            bottomBar
+        }
+        .padding(20)
+        .frame(width: 560, height: 420)
+        .onReceive(authPoller) { _ in
+            authStatus = CMHeadphoneMotionManager.authorizationStatus()
+        }
+    }
+
+    // MARK: 第 1 步：欢迎
+
+    private var welcomePage: some View {
+        VStack(spacing: 16) {
+            Spacer()
+            Text("🐢")
+                .font(.system(size: 56))
+            Text("欢迎使用 NeckUp")
+                .font(.title.weight(.semibold))
+            Text("脖子曲度变直这件事，自己是感觉不到的。\nNeckUp 用 AirPods 的传感器实时感知你的低头，\n在该抬头的时候轻轻提醒你。")
+                .multilineTextAlignment(.center)
+                .foregroundStyle(.secondary)
+            Text("使用前请准备好 AirPods（Pro / 3 代 / Max / Beats Fit Pro）")
+                .font(.footnote)
+                .foregroundStyle(.tertiary)
+            Spacer()
+        }
+    }
+
+    // MARK: 第 2 步：权限
+
+    private var permissionGranted: Bool {
+        AppSettings.mockRequested || authStatus == .authorized
+    }
+
+    private var permissionPage: some View {
+        VStack(spacing: 16) {
+            Spacer()
+            Image(systemName: permissionGranted ? "checkmark.circle.fill" : "figure.motion")
+                .font(.system(size: 48))
+                .foregroundStyle(permissionGranted ? .green : .orange)
+                .contentTransition(.symbolEffect(.replace))
+            Text("授权「运动与健身」权限")
+                .font(.title2.weight(.semibold))
+            Text("NeckUp 只读取 AirPods 的头部姿态数据，\n所有记录只保存在本机，绝不上传。")
+                .multilineTextAlignment(.center)
+                .foregroundStyle(.secondary)
+
+            if permissionGranted {
+                Text("已授权 ✓")
+                    .foregroundStyle(.green)
+            } else if authStatus == .denied || authStatus == .restricted {
+                Text("权限曾被拒绝，需要在系统设置里手动打开")
+                    .font(.footnote)
+                    .foregroundStyle(.orange)
+                Button("打开系统设置") {
+                    if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Motion") {
+                        NSWorkspace.shared.open(url)
+                    }
+                }
+            } else {
+                Button("去授权") { monitor.start() }
+                    .buttonStyle(.borderedProminent)
+            }
+
+            if permissionGranted, !monitor.isWearing {
+                Text("还没检测到 AirPods，戴上后自动开始；也可以先跳过")
+                    .font(.footnote)
+                    .foregroundStyle(.tertiary)
+            }
+            Spacer()
+        }
+    }
+
+    // MARK: 第 3 步：校准 + 试动
+
+    private var calibratePage: some View {
+        VStack(spacing: 12) {
+            Text("校准你的坐姿")
+                .font(.title2.weight(.semibold))
+
+            HeadAvatar(pose: monitor.headPose)
+                .frame(width: 140, height: 140)
+                .background(.quaternary, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+
+            if !monitor.isWearing {
+                Text("未检测到 AirPods。可以先跳过，之后随时在岛上点「坐直校准」。")
+                    .font(.footnote)
+                    .foregroundStyle(.tertiary)
+            } else if calibrated {
+                Text("校准完成！点点头、转转头，小人会跟着你动 🐢")
+                    .font(.footnote)
+                    .foregroundStyle(.green)
+            } else {
+                Text("戴上 AirPods，坐直、目视前方，然后点击校准")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
+
+            Button("我坐直了，校准") {
+                monitor.recalibrate()
+                calibrated = true
+            }
+            .buttonStyle(.borderedProminent)
+            .disabled(!monitor.isWearing)
+        }
+    }
+
+    // MARK: 第 4 步：游戏与提醒
+
+    private var gamePage: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Spacer()
+            Text("休息时，打一局")
+                .font(.title2.weight(.semibold))
+            Text("番茄钟休息或活动提醒到点时，岛上会开一局 60 秒头控小游戏——\n用点头、转头、侧屈打跑五只「僵硬怪」，顺便把脖子活动开。\n不玩没有任何惩罚，点一下岛就能收掉。")
+                .foregroundStyle(.secondary)
+
+            Form {
+                Toggle("休息段打怪小游戏", isOn: $settings.gameEnabled)
+                Picker("定时活动提醒", selection: $settings.breakIntervalMin) {
+                    Text("跟随番茄钟").tag(0.0)
+                    Text("每 30 分钟").tag(30.0)
+                    Text("每 45 分钟").tag(45.0)
+                    Text("每 60 分钟").tag(60.0)
+                }
+                Picker("提醒灵敏度", selection: sensitivity) {
+                    Text("严格").tag(0)
+                    Text("标准").tag(1)
+                    Text("宽松").tag(2)
+                }
+                .pickerStyle(.segmented)
+            }
+            .formStyle(.grouped)
+
+            Text("这些以后都能在菜单栏「设置…」里随时修改。")
+                .font(.footnote)
+                .foregroundStyle(.tertiary)
+            Spacer()
+        }
+    }
+
+    // MARK: 底部导航
+
+    private var bottomBar: some View {
+        HStack {
+            Button("上一步") { step -= 1 }
+                .disabled(step == 0)
+            Spacer()
+            HStack(spacing: 6) {
+                ForEach(0 ..< 4, id: \.self) { i in
+                    Capsule()
+                        .fill(i == step ? Color.primary : Color.secondary.opacity(0.3))
+                        .frame(width: i == step ? 16 : 6, height: 6)
+                }
+            }
+            Spacer()
+            if step < 3 {
+                Button("下一步") { step += 1 }
+                    .buttonStyle(.borderedProminent)
+                    .keyboardShortcut(.defaultAction)
+            } else {
+                Button("完成") { onFinish() }
+                    .buttonStyle(.borderedProminent)
+                    .keyboardShortcut(.defaultAction)
+            }
+        }
+        .controlSize(.large)
+    }
+}
+
+// MARK: - 像素人头（跟随头部姿态）
+
+/// 12×12 像素小人：yaw 左右平移、pitch 上下平移、roll 侧倾旋转
+struct HeadAvatar: View {
+    let pose: HeadPose
+
+    // H=头发 S=皮肤 E=眼睛 M=嘴 .=空
+    private static let grid: [String] = [
+        "....HHHH....",
+        "..HHHHHHHH..",
+        ".HHHHHHHHHH.",
+        ".HHSSSSSSHH.",
+        ".HHSSSSSSHH.",
+        ".HHSESSESHH.",
+        ".HHSSSSSSHH.",
+        ".HHSSMMSSHH.",
+        "..SSSSSSSS..",
+        "..SSSSSSSS..",
+        "...SSSSSS...",
+        "............",
+    ]
+
+    private static let colors: [Character: Color] = [
+        "H": Color(red: 0.25, green: 0.18, blue: 0.14),
+        "S": Color(red: 0.98, green: 0.78, blue: 0.58),
+        "E": Color(red: 0.12, green: 0.12, blue: 0.14),
+        "M": Color(red: 0.75, green: 0.3, blue: 0.25),
+    ]
+
+    var body: some View {
+        Canvas { ctx, size in
+            let k = size.width / 12
+            var c = ctx
+            // roll 侧倾 → 小幅旋转；yaw/pitch → 平移（低头小人往下走）
+            c.translateBy(x: size.width / 2, y: size.height / 2)
+            c.rotate(by: .degrees(-pose.roll * 0.4))
+            c.translateBy(
+                x: CGFloat(max(-25, min(25, pose.yaw))) * k * 0.10,
+                y: CGFloat(max(-25, min(25, -pose.pitch))) * k * 0.10
+            )
+            c.translateBy(x: -size.width / 2, y: -size.height / 2)
+            for (row, line) in Self.grid.enumerated() {
+                for (col, ch) in line.enumerated() {
+                    guard let color = Self.colors[ch] else { continue }
+                    c.fill(
+                        Path(CGRect(x: CGFloat(col) * k, y: CGFloat(row) * k,
+                                    width: k + 0.5, height: k + 0.5)),
+                        with: .color(color)
+                    )
+                }
+            }
+        }
+        .animation(.easeOut(duration: 0.15), value: pose)
+    }
+}

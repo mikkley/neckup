@@ -10,6 +10,8 @@ final class PostureMonitor: ObservableObject {
     }
 
     @Published private(set) var pitchDeg: Double = 0      // 校准 + 滑动平均后的俯仰角
+    /// 校准后未平滑的三轴姿态（新手引导的人头跟随用；游戏走 onRawPose 回调）
+    @Published private(set) var headPose = HeadPose(pitch: 0)
     @Published private(set) var isWearing = false
     @Published private(set) var isBadPosture = false
     @Published private(set) var isReminding = false
@@ -132,6 +134,7 @@ final class PostureMonitor: ObservableObject {
         let adjusted = HeadPose(pitch: pose.pitch - c.pitch,
                                 yaw: pose.yaw - c.yaw,
                                 roll: pose.roll - c.roll)
+        headPose = adjusted
         onRawPose?(adjusted)   // 校准后未平滑 → 游戏
         let now = Date()
         window.append((now, adjusted.pitch))
