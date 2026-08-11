@@ -6,6 +6,7 @@ import SwiftUI
 struct SettingsView: View {
     @EnvironmentObject var settings: AppSettings
     @EnvironmentObject var monitor: PostureMonitor
+    @EnvironmentObject var appState: AppState
 
     /// 灵敏度三档 ↔ 内部阈值角度的映射
     private var sensitivity: Binding<Int> {
@@ -41,18 +42,28 @@ struct SettingsView: View {
             }
             Section("游戏玩法") {
                 ForEach(MonsterType.allCases, id: \.self) { monster in
-                    HStack(spacing: 10) {
-                        MonsterPortrait(monster: monster)
-                            .frame(width: 44, height: 26)
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(monster.displayName)
-                            Text(monster.tutorialText)
+                    Button {
+                        appState.startPractice(monster)
+                    } label: {
+                        HStack(spacing: 10) {
+                            MonsterPortrait(monster: monster)
+                                .frame(width: 44, height: 26)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(monster.displayName)
+                                Text(monster.tutorialText)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            Text("试玩")
                                 .font(.caption)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(.tertiary)
                         }
+                        .contentShape(Rectangle())
                     }
+                    .buttonStyle(.plain)
                 }
-                Text("每只怪首次出现时会先播教学卡，跟着做就会了。")
+                Text("点任意一只即可在灵动岛上试玩；首次会先播教学卡。正式对局在番茄钟休息段自动开始。")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

@@ -169,10 +169,18 @@ final class AppState: ObservableObject {
     }
 
     private func startGame() {
+        encounter(deck.draw())
+    }
+
+    /// 设置页「游戏玩法」点按试玩：指定怪直接开一局（不看番茄钟阶段；对局中/教学卡播放中忽略）
+    func startPractice(_ monster: MonsterType) {
+        encounter(monster)
+    }
+
+    private func encounter(_ monster: MonsterType) {
         guard game == nil, pendingTutorial == nil else { return }
         monitor.setHighFrequency(true)   // 对局需要 25Hz（覆盖休息段中途开开关的路径）
         monitor.gameActive = true        // 对局期间豁免提醒与低头统计（做颈椎操不算低头）
-        let monster = deck.draw()
         if UserDefaults.standard.bool(forKey: Self.tutorialKey(monster)) {
             beginGame(monster)
         } else {

@@ -19,6 +19,7 @@ final class SettingsWindowController {
             let root = SettingsView()
                 .environmentObject(state.settings)
                 .environmentObject(state.monitor)
+                .environmentObject(state)
             let w = NSWindow(
                 contentRect: NSRect(x: 0, y: 0, width: 420, height: 640),
                 styleMask: [.titled, .closable],
