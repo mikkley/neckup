@@ -32,6 +32,17 @@ public enum MonsterType: String, CaseIterable, Codable, Sendable {
         }
     }
 
+    /// 首次遭遇教学卡的动作说明（比 guideText 多一句机制）
+    public var tutorialText: String {
+        switch self {
+        case .slimeAxe: "史莱姆落到虚线区时，慢慢点头劈中它"
+        case .twinBeetle: "甲虫从哪边来，就慢慢转向哪边，到位即格挡"
+        case .scaleJellyfish: "侧倾带动托盘接宝石；大宝石悬停时定住 5 秒"
+        case .qiTurtle: "轻轻收下巴（像挤出双下巴），蓄满力发射气功波"
+        case .moonBat: "低头并转向蝙蝠一侧锁定准星，稳住 1 秒自动放箭"
+        }
+    }
+
     /// 挂机提示文案（20s 无动作）
     public var idleHintText: String {
         switch self {

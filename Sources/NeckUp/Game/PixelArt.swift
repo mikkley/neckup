@@ -27,4 +27,15 @@ extension MonsterType {
         case .moonBat: Color(red: 0.72, green: 0.5, blue: 0.95)
         }
     }
+
+    /// 教学卡 / 设置页「游戏玩法」的静态肖像（复用各场景像素画，单一来源）
+    var portrait: (art: [[Character]], palette: [Character: Color]) {
+        switch self {
+        case .slimeAxe: (SlimeScene.slimeArt, SlimeScene.palette)
+        case .twinBeetle: (BeetleScene.beetleArt, BeetleScene.palette)
+        case .scaleJellyfish: (JellyScene.jellyArt, JellyScene.palette)
+        case .qiTurtle: (TurtleScene.turtleArt, TurtleScene.palette)
+        case .moonBat: (BatScene.batUp, BatScene.palette)
+        }
+    }
 }

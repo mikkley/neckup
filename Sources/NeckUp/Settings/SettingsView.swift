@@ -1,4 +1,5 @@
 import AppKit
+import NeckUpCore
 import SwiftUI
 
 /// 设置窗口：灵敏度、持续时长、提醒开关等（零学习：不暴露角度）
@@ -38,6 +39,23 @@ struct SettingsView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
+            Section("游戏玩法") {
+                ForEach(MonsterType.allCases, id: \.self) { monster in
+                    HStack(spacing: 10) {
+                        MonsterPortrait(monster: monster)
+                            .frame(width: 44, height: 26)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(monster.displayName)
+                            Text(monster.tutorialText)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+                Text("每只怪首次出现时会先播教学卡，跟着做就会了。")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
             Section("定时活动") {
                 Picker("活动提醒", selection: $settings.breakIntervalMin) {
                     Text("关闭").tag(0.0)
@@ -69,6 +87,6 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .frame(width: 420, height: 440)
+        .frame(width: 420, height: 620)
     }
 }

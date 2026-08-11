@@ -5,13 +5,20 @@ import SwiftUI
 enum BeetleScene {
     private static let pixel: CGFloat = 4
 
-    /// 双头甲虫（18×5，H=头 K=眼 B=身 L=腿）
-    private static let beetleArt: [[Character]] = [
+    /// 双头甲虫（18×5，H=头 K=眼 B=身 L=腿）；教学卡/设置页也复用
+    static let beetleArt: [[Character]] = [
         Array(".KH..............HK."),
         Array("HHHBBBBBBBBBBBBBBHHH"),
         Array("HHHBBBBBBBBBBBBBBHHH"),
         Array(".HHBBBBBBBBBBBBBBHH."),
         Array("..L...L......L...L.."),
+    ]
+
+    static let palette: [Character: Color] = [
+        "H": Color(red: 0.85, green: 0.35, blue: 0.25),
+        "K": .black,
+        "B": MonsterType.twinBeetle.themeColor,
+        "L": Color(red: 0.4, green: 0.25, blue: 0.15),
     ]
 
     /// 盾（10×7，S=盾面 W=高光）
@@ -66,11 +73,6 @@ enum BeetleScene {
     }
 
     private static func drawBeetle(ctx: inout GraphicsContext, at origin: CGPoint) {
-        PixelArt.draw(ctx: &ctx, art: beetleArt, palette: [
-            "H": Color(red: 0.85, green: 0.35, blue: 0.25),
-            "K": .black,
-            "B": MonsterType.twinBeetle.themeColor,
-            "L": Color(red: 0.4, green: 0.25, blue: 0.15),
-        ], origin: origin, pixel: pixel)
+        PixelArt.draw(ctx: &ctx, art: beetleArt, palette: palette, origin: origin, pixel: pixel)
     }
 }

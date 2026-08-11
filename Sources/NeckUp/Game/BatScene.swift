@@ -5,8 +5,8 @@ import SwiftUI
 enum BatScene {
     private static let pixel: CGFloat = 4
 
-    /// 蝙蝠展翅（13×5，B=身 K=翼尖）
-    private static let batUp: [[Character]] = [
+    /// 蝙蝠展翅（13×5，B=身 K=翼尖）；教学卡/设置页也复用
+    static let batUp: [[Character]] = [
         Array("K...........K"),
         Array("KK..BBBBB..KK"),
         Array(".KKBBBBBBBK.."),
@@ -83,7 +83,7 @@ enum BatScene {
         }
     }
 
-    private static let palette: [Character: Color] = [
+    static let palette: [Character: Color] = [
         "B": MonsterType.moonBat.themeColor,
         "K": .black,
     ]

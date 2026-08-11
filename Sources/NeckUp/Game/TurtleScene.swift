@@ -5,8 +5,8 @@ import SwiftUI
 enum TurtleScene {
     private static let pixel: CGFloat = 4
 
-    /// 慢慢（16×7，S=壳棕 G=身/头绿 K=眼）
-    private static let turtleArt: [[Character]] = [
+    /// 慢慢（16×7，S=壳棕 G=身/头绿 K=眼）；教学卡/设置页也复用
+    static let turtleArt: [[Character]] = [
         Array("......SSSSSS......"),
         Array("....SSSSSSSSSS...."),
         Array("...SSSSSSSSSSSS..."),
@@ -16,12 +16,15 @@ enum TurtleScene {
         Array("...G..........G..."),
     ]
 
+    static let palette: [Character: Color] = [
+        "S": Color(red: 0.55, green: 0.4, blue: 0.25),
+        "G": MonsterType.qiTurtle.themeColor,
+        "K": .black,
+    ]
+
     static func draw(ctx: inout GraphicsContext, size: CGSize, snap: QiTurtleGame.Snapshot) {
-        PixelArt.draw(ctx: &ctx, art: turtleArt, palette: [
-            "S": Color(red: 0.55, green: 0.4, blue: 0.25),
-            "G": MonsterType.qiTurtle.themeColor,
-            "K": .black,
-        ], origin: CGPoint(x: 20, y: size.height - 60), pixel: pixel)
+        PixelArt.draw(ctx: &ctx, art: turtleArt, palette: palette,
+                      origin: CGPoint(x: 20, y: size.height - 60), pixel: pixel)
 
         drawCloud(ctx: &ctx, size: size)
 

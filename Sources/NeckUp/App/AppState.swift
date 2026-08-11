@@ -26,6 +26,8 @@ final class AppState: ObservableObject {
 
     /// 游戏渲染视图状态（GameContainerView 只读；nil 表示无对局）
     @Published private(set) var gameViewState: GameViewState?
+    /// 首次遭遇的教学卡（非 nil 时游戏窗先播教学卡，再正式开局）
+    @Published private(set) var pendingTutorial: MonsterType?
     /// 首次进入游戏的一次性安全提示（设计文档 §7）
     @Published private(set) var safetyHint: String?
     /// 刘海几何（NotchPanelManager 在屏幕变化时更新；收缩态布局依此避让刘海）
@@ -40,6 +42,7 @@ final class AppState: ObservableObject {
     private var game: ActiveGame?
     private var mock: MockMotionProvider?
     private var gameLoopTask: Task<Void, Never>?
+    private var tutorialTask: Task<Void, Never>?
     private var breakTask: Task<Void, Never>?
     private var cancellables: Set<AnyCancellable> = []
 
@@ -126,9 +129,9 @@ final class AppState: ObservableObject {
         monitor.start()
     }
 
-    /// 传感器采样率调度：番茄钟专注期/对局期 25Hz，其余低功耗（引导页打开时由引导控制器临时拉满）
+    /// 传感器采样率调度：番茄钟专注期/对局期（含教学卡）25Hz，其余低功耗（引导页打开时由引导控制器临时拉满）
     func refreshSamplingRate() {
-        monitor.setHighFrequency(pomodoro.phase == .focus || game != nil)
+        monitor.setHighFrequency(pomodoro.phase == .focus || game != nil || pendingTutorial != nil)
     }
 
     // MARK: 定时活动提醒（独立于番茄钟）
@@ -161,11 +164,35 @@ final class AppState: ObservableObject {
 
     // MARK: 游戏编排（洗牌式遭遇，五只怪轮换，设计文档 §5.1）
 
+    private static func tutorialKey(_ monster: MonsterType) -> String {
+        "tutorialShown.\(monster.rawValue)"
+    }
+
     private func startGame() {
-        guard game == nil else { return }
+        guard game == nil, pendingTutorial == nil else { return }
         monitor.setHighFrequency(true)   // 对局需要 25Hz（覆盖休息段中途开开关的路径）
         monitor.gameActive = true        // 对局期间豁免提醒与低头统计（做颈椎操不算低头）
         let monster = deck.draw()
+        if UserDefaults.standard.bool(forKey: Self.tutorialKey(monster)) {
+            beginGame(monster)
+        } else {
+            // 首次遭遇：先播教学卡（4.5s 或点「开始」跳过），再正式开局
+            pendingTutorial = monster
+            islandState = .game
+            tutorialTask = Task { [weak self] in
+                try? await Task.sleep(nanoseconds: 4_500_000_000)
+                self?.beginGame(monster)
+            }
+        }
+    }
+
+    /// 教学卡结束（4.5s 到点 / 点「开始」）→ 正式开局；已看过教学的怪直接进这里
+    func beginGame(_ monster: MonsterType) {
+        guard game == nil else { return }
+        tutorialTask?.cancel()
+        tutorialTask = nil
+        pendingTutorial = nil
+        UserDefaults.standard.set(true, forKey: Self.tutorialKey(monster))
         game = ActiveGame(monster: monster, startAt: Date())
         mock?.setMonster(monster)   // mock 波形切到当前怪的轴（无 AirPods 预览）
         gameViewState = nil
@@ -190,6 +217,9 @@ final class AppState: ObservableObject {
 
     /// 一局结束 / 休息结束 / 用户点击 / 关闭开关 → 收回
     func endGame() {
+        tutorialTask?.cancel()
+        tutorialTask = nil
+        pendingTutorial = nil
         gameLoopTask?.cancel()
         gameLoopTask = nil
         game = nil

@@ -5,8 +5,8 @@ import SwiftUI
 enum JellyScene {
     private static let pixel: CGFloat = 4
 
-    /// 天平水母（12×8，J=伞体 W=眼 K=瞳 T=触手）
-    private static let jellyArt: [[Character]] = [
+    /// 天平水母（12×8，J=伞体 W=眼 K=瞳 T=触手）；教学卡/设置页也复用
+    static let jellyArt: [[Character]] = [
         Array("...JJJJJJ..."),
         Array("..JJJJJJJJ.."),
         Array(".JWKJJJJKWJ."),
@@ -17,16 +17,19 @@ enum JellyScene {
         Array("........T..."),
     ]
 
+    static let palette: [Character: Color] = [
+        "J": MonsterType.scaleJellyfish.themeColor,
+        "W": .white,
+        "K": .black,
+        "T": Color(red: 0.6, green: 0.9, blue: 1.0),
+    ]
+
     static func draw(ctx: inout GraphicsContext, size: CGSize, snap: ScaleJellyfishGame.Snapshot, now: Date) {
         let trayY = size.height - 32
         let span = size.width / 2 - 56
 
-        PixelArt.draw(ctx: &ctx, art: jellyArt, palette: [
-            "J": MonsterType.scaleJellyfish.themeColor,
-            "W": .white,
-            "K": .black,
-            "T": Color(red: 0.6, green: 0.9, blue: 1.0),
-        ], origin: CGPoint(x: size.width / 2 - 6 * pixel, y: 4), pixel: pixel)
+        PixelArt.draw(ctx: &ctx, art: jellyArt, palette: palette,
+                      origin: CGPoint(x: size.width / 2 - 6 * pixel, y: 4), pixel: pixel)
 
         // 托盘：随 roll 平移 + 倾斜
         let trayX = size.width / 2 + snap.trayX * span

@@ -19,8 +19,14 @@ struct NotchView: View {
                     .transition(.opacity.combined(with: .move(edge: .top)))
             }
             if appState.islandState == .game {
-                GameContainerView()
-                    .transition(.opacity.combined(with: .move(edge: .top)))
+                Group {
+                    if let tutorial = appState.pendingTutorial {
+                        TutorialCardView(monster: tutorial)
+                    } else {
+                        GameContainerView()
+                    }
+                }
+                .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)

@@ -5,8 +5,8 @@ import SwiftUI
 enum SlimeScene {
     static let axeZone: CGFloat = 52   // 底部斧头区高度（粒子锚点计算也用）
 
-    /// 史莱姆像素画（12×7，G=身体 W=眼白 K=瞳孔）
-    private static let slimeArt: [[Character]] = [
+    /// 史莱姆像素画（12×7，G=身体 W=眼白 K=瞳孔）；教学卡/设置页也复用
+    static let slimeArt: [[Character]] = [
         Array("....GGGG...."),
         Array("..GGGGGGGG.."),
         Array(".GGGGGGGGGG."),
@@ -16,7 +16,7 @@ enum SlimeScene {
         Array("..G.G..G.G.."),
     ]
 
-    private static let palette: [Character: Color] = [
+    static let palette: [Character: Color] = [
         "G": MonsterType.slimeAxe.themeColor,
         "W": .white,
         "K": .black,
