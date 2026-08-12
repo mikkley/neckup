@@ -26,6 +26,8 @@ public struct MoonBatGame: Sendable {
         public var batFalling: Bool     // 命中后坠落动画中
         public var batX: Double         // 0~1 飞过进度
         public var aimProgress: Double  // 0~1 复合瞄准接近度
+        public var aimX: Double         // -1~1 带方向 yaw（自由准星横移，左转为正）
+        public var aimY: Double         // 0~1 低头量（自由准星纵移）
         public var stableProgress: Double // 0~1 稳定锁定进度
         public var combo: Int
         public var kills: Int
@@ -64,6 +66,8 @@ public struct MoonBatGame: Sendable {
     private var nextSpawnAt: Date
     private var stableTime = 0.0
     private var aimProgress = 0.0
+    private var aimX = 0.0
+    private var aimY = 0.0
     private var ratchet = RatchetTracker()
     private var tooFastLatched = false
     private var lastActiveAt: Date
@@ -120,6 +124,9 @@ public struct MoonBatGame: Sendable {
         aimProgress = batActive && !batFalling
             ? min(min(pitchDown / Self.pitchMin, 1), yawMatch ? min(abs(yaw) / Self.yawMin, 1) : 0)
             : 0
+        // 自由准星连续跟随（无论是否在瞄准窗口）：30° 横满偏、pitchMax 纵满偏
+        aimX = min(max(yaw / 30, -1), 1)
+        aimY = min(max(pitchDown / Self.pitchMax, 0), 1)
 
         if tooFastLatched {
             if speed <= SafetyLimits.warnSpeed { tooFastLatched = false }
@@ -158,7 +165,8 @@ public struct MoonBatGame: Sendable {
             : batActive ? min(now.timeIntervalSince(batAt) / Self.flightSec, 1) : 0
         let msg: String? = if let message, let until = messageUntil, now < until { message } else { nil }
         return Snapshot(batSide: batSide, batActive: batActive, batFalling: batFalling, batX: batX,
-                        aimProgress: aimProgress, stableProgress: min(stableTime / Self.stableSec, 1),
+                        aimProgress: aimProgress, aimX: aimX, aimY: aimY,
+                        stableProgress: min(stableTime / Self.stableSec, 1),
                         combo: combo, kills: kills, droplets: droplets,
                         remainingSec: Int(remaining.rounded(.up)), message: msg, result: result)
     }

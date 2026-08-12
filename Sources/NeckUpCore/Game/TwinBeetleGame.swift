@@ -28,6 +28,7 @@ public struct TwinBeetleGame: Sendable {
         public var phase: Phase
         public var approach: Double     // 0~1 逼近进度（0=贴边，1=到脸上）
         public var yawProgress: Double  // 0~1 正确方向转头接近度
+        public var yawAim: Double       // -1~1 带方向转头量（盾牌连续跟随，无论方向对错）
         public var holdProgress: Double // 0~1 格挡保持进度
         public var combo: Int
         public var kills: Int
@@ -61,6 +62,7 @@ public struct TwinBeetleGame: Sendable {
     private var nextSide = 1                   // 左右交替
     private var holdTime = 0.0
     private var yawProgress = 0.0
+    private var yawAim = 0.0
     private var ratchet = RatchetTracker()
     private var tooFastLatched = false         // 甩头提示锁存，速度回落才解除
     private var lastActiveAt: Date
@@ -112,6 +114,8 @@ public struct TwinBeetleGame: Sendable {
         let matched = side != 0 && ((side < 0 && yaw > 1) || (side > 0 && yaw < -1))
         let aimed = matched && abs(yaw) >= Self.blockAngle
         yawProgress = matched ? min(abs(yaw) / Self.blockAngle, 1) : 0
+        // 带方向归一化转头量：盾牌连续跟随（无论是否转对方向）
+        yawAim = min(max(yaw / Self.blockAngle, -1), 1)
 
         // 甩头锁存：到位时速度超限 → 提示，本次不算；速度回落后解锁
         if tooFastLatched {
@@ -151,6 +155,7 @@ public struct TwinBeetleGame: Sendable {
         let approach: Double = phase == .approach ? min(now.timeIntervalSince(phaseAt) / Self.approachSec, 1) : 0
         let msg: String? = if let message, let until = messageUntil, now < until { message } else { nil }
         return Snapshot(side: side, phase: phase, approach: approach, yawProgress: yawProgress,
+                        yawAim: yawAim,
                         holdProgress: min(holdTime / Self.holdSec, 1), combo: combo, kills: kills,
                         droplets: droplets, remainingSec: Int(remaining.rounded(.up)),
                         message: msg, result: result)

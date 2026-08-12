@@ -5,6 +5,7 @@ import SwiftUI
 /// 逻辑全在 NeckUpCore 各状态机，这里只读 AppState.gameViewState 画像素。
 struct GameContainerView: View {
     @EnvironmentObject var appState: AppState
+    @EnvironmentObject var monitor: PostureMonitor
 
     /// 命中粒子：出生时刻 + 随机初速度，0.6s 寿命
     private struct Particle {
@@ -63,6 +64,10 @@ struct GameContainerView: View {
             }
             Spacer()
             Text("\(appState.gameViewState?.hud.remainingSec ?? 0)s")
+            // 常驻迷你小人：实时跟随头部，任何时刻都能确认动作被识别
+            HeadAvatar(pose: monitor.headPose)
+                .frame(width: 18, height: 18)
+                .padding(.leading, 6)
         }
         .font(.system(.footnote, design: .rounded).weight(.medium))
         .foregroundStyle(.white.opacity(0.85))

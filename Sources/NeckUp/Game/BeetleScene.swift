@@ -60,16 +60,22 @@ enum BeetleScene {
         }
     }
 
-    /// 盾随手转头进度增亮、随格挡保持进度上举
+    /// 盾随手转头连续左右滑动+微倾（yawAim 带方向：左转盾左移，镜像一致）；
+    /// 转对方向增亮、格挡保持时上举
     private static func drawShield(ctx: inout GraphicsContext, size: CGSize,
                                    snap: TwinBeetleGame.Snapshot, ground: CGFloat) {
         let lift = snap.holdProgress * 10
+        let span = size.width / 2 - 50
+        let cx = size.width / 2 - snap.yawAim * span
+        let cy = ground - 30 - lift + 3.5 * pixel   // 盾心（art 高 7 行）
         var c = ctx
+        c.translateBy(x: cx, y: cy)
+        c.rotate(by: .degrees(-snap.yawAim * 10))
         c.opacity = 0.45 + snap.yawProgress * 0.55
         PixelArt.draw(ctx: &c, art: shieldArt, palette: [
             "S": Color(red: 0.5, green: 0.7, blue: 0.95),
             "W": .white,
-        ], origin: CGPoint(x: size.width / 2 - 5 * pixel, y: ground - 30 - lift), pixel: pixel)
+        ], origin: CGPoint(x: -5 * pixel, y: -3.5 * pixel), pixel: pixel)
     }
 
     private static func drawBeetle(ctx: inout GraphicsContext, at origin: CGPoint) {

@@ -39,11 +39,19 @@ enum BatScene {
                  with: .color(Color(red: 0.06, green: 0.08, blue: 0.14)))   // 与游戏底色一致
     }
 
-    /// 准星：四角括号，随瞄准接近度点亮；稳定进度环
+    /// 准星：自由跟随头部（yaw 横移镜像、低头下移），目标方位有暗色标记；
+    /// 重合进窗口点亮，稳定进度环套在自由准星上
     private static func drawCrosshair(ctx: inout GraphicsContext, size: CGSize, snap: MoonBatGame.Snapshot) {
-        let cx = size.width * (snap.batSide > 0 ? 0.72 : 0.28)
-        let cy = size.height - 44
-        let alpha = 0.3 + snap.aimProgress * 0.7
+        // 目标方位标记（暗）：蝙蝠来向对应的「腋下」瞄准点
+        let tx = size.width * (snap.batSide > 0 ? 0.72 : 0.28)
+        let ty = size.height - 44
+        ctx.stroke(Path(ellipseIn: CGRect(x: tx - 10, y: ty - 10, width: 20, height: 20)),
+                   with: .color(.white.opacity(0.25)), lineWidth: 2)
+
+        // 自由准星：连续跟随 (yaw, pitch)，无论是否瞄中都可见
+        let cx = size.width / 2 - snap.aimX * (size.width / 2 - 40)
+        let cy = size.height * 0.5 + snap.aimY * (size.height * 0.5 - 36)
+        let alpha = 0.35 + snap.aimProgress * 0.65
         let color = snap.stableProgress > 0 ? MonsterType.moonBat.themeColor.opacity(alpha) : .white.opacity(alpha)
         // 四角括号
         for (dx, dy) in [(-1.0, -1.0), (1.0, -1.0), (-1.0, 1.0), (1.0, 1.0)] {

@@ -28,6 +28,7 @@ public struct QiTurtleGame: Sendable {
         public var phase: Phase
         public var charge: Double       // 0~1 蓄力条
         public var charging: Bool       // 本帧正在有效蓄力（蓄力条高亮）
+        public var dip: Double          // 0~1 当前下探深度（气球连续跟随，未进窗口也可见）
         public var combo: Int
         public var kills: Int
         public var droplets: Int
@@ -64,6 +65,7 @@ public struct QiTurtleGame: Sendable {
     private var maxDip = 0.0
     private var charge = 0.0
     private var chargingNow = false
+    private var dip = 0.0
     private var tooFastLatched = false
     private var lastActiveAt: Date
     private var idleHintShown = false
@@ -111,6 +113,8 @@ public struct QiTurtleGame: Sendable {
             lastActiveAt = now
             idleHintShown = false
         }
+        // 下探深度连续量（dipMax 满）：气球反馈用，小动作也可见
+        dip = min(max(pitchDown / Self.dipMax, 0), 1)
 
         chargingNow = false
         if tooFastLatched {
@@ -172,7 +176,7 @@ public struct QiTurtleGame: Sendable {
     public func snapshot(at now: Date) -> Snapshot {
         let remaining = max(0, Self.duration - now.timeIntervalSince(startAt))
         let msg: String? = if let message, let until = messageUntil, now < until { message } else { nil }
-        return Snapshot(phase: phase, charge: charge, charging: chargingNow,
+        return Snapshot(phase: phase, charge: charge, charging: chargingNow, dip: dip,
                         combo: combo, kills: kills, droplets: droplets,
                         remainingSec: Int(remaining.rounded(.up)), message: msg, result: result)
     }
