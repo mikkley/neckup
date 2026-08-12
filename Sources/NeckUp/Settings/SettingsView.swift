@@ -111,6 +111,17 @@ struct SettingsView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
+            Section(L10n.secFeedback) {
+                Button(L10n.feedbackIssue) { openFeedbackIssue() }
+                Button(L10n.feedbackExport) {
+                    if let url = DebugLog.exportToDesktop() {
+                        NSWorkspace.shared.activateFileViewerSelecting([url])
+                    }
+                }
+                Text(L10n.feedbackDesc)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
             Section(L10n.secSupport) {
                 HStack(spacing: 10) {
                     Button("☕ Buy Me a Coffee") {
@@ -137,6 +148,26 @@ struct SettingsView: View {
             .frame(width: 380, height: 400)
             .onAppear { monitor.setHighFrequency(true) }
         }
+    }
+    /// 打开预填诊断信息的 GitHub issue（内容用户可见可删减，无需内置任何 token）
+    private func openFeedbackIssue() {
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "dev"
+        let body = """
+        ## 问题描述 / Description
+        （请描述你遇到的问题 / What happened?）
+
+        ## 诊断信息（自动生成，可删减）
+        - App: v\(version) · macOS \(ProcessInfo.processInfo.operatingSystemVersionString)
+        - 权限拒绝: \(monitor.permissionDenied) · 佩戴: \(monitor.isWearing) · 监测: \(monitor.isMonitoring) · mock: \(settings.mockMode)
+        - 最近日志:
+        ```
+        \(DebugLog.recent())
+        ```
+        """
+        var c = URLComponents(string: "https://github.com/mikkley/neckup/issues/new")!
+        c.queryItems = [URLQueryItem(name: "labels", value: "bug"),
+                        URLQueryItem(name: "body", value: String(body.prefix(3500)))]
+        if let url = c.url { NSWorkspace.shared.open(url) }
     }
 }
 

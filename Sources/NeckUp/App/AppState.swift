@@ -127,6 +127,8 @@ final class AppState: ObservableObject {
     }
 
     func start() {
+        let v = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "dev"
+        DebugLog.log("启动 v\(v) · macOS \(ProcessInfo.processInfo.operatingSystemVersionString) · mock=\(AppSettings.mockRequested)")
         monitor.start()
         updateChecker.checkAutomatically()
     }
@@ -204,6 +206,7 @@ final class AppState: ObservableObject {
         pendingTutorial = nil
         UserDefaults.standard.set(true, forKey: Self.tutorialKey(monster))
         game = ActiveGame(monster: monster, startAt: Date())
+        DebugLog.log("开局 \(monster.rawValue)")
         mock?.setMonster(monster)   // mock 波形切到当前怪的轴（无 AirPods 预览）
         gameViewState = nil
         islandState = .game
@@ -238,6 +241,7 @@ final class AppState: ObservableObject {
         mock?.setMonster(nil)
         sound.stopCharge()
         monitor.gameActive = false
+        DebugLog.log("收局")
         // 对局中被压制的提醒在结束后恢复，不吞提醒
         if islandState == .game { islandState = monitor.isReminding ? .reminder : .collapsed }
         refreshSamplingRate()

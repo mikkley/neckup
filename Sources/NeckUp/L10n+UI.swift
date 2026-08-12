@@ -584,6 +584,41 @@ extension L10n {
         }
     }
 
+    // MARK: 反馈 / 诊断日志
+
+    public static var secFeedback: String {
+        switch resolved {
+        case .zhHans, .system: "反馈问题"
+        case .en: "Feedback"
+        case .ja: "フィードバック"
+        case .ko: "피드백"
+        }
+    }
+    public static var feedbackIssue: String {
+        switch resolved {
+        case .zhHans, .system: "反馈问题…（GitHub，附诊断信息）"
+        case .en: "Report an Issue… (GitHub, with diagnostics)"
+        case .ja: "問題を報告…（GitHub・診断情報付き）"
+        case .ko: "문제 신고…(GitHub, 진단 정보 포함)"
+        }
+    }
+    public static var feedbackExport: String {
+        switch resolved {
+        case .zhHans, .system: "导出完整日志到桌面"
+        case .en: "Export Full Log to Desktop"
+        case .ja: "完全なログをデスクトップへ"
+        case .ko: "전체 로그를 데스크톱으로"
+        }
+    }
+    public static var feedbackDesc: String {
+        switch resolved {
+        case .zhHans, .system: "日志只记录连接/权限/校准等事件，不含姿态数据，只存在本机。"
+        case .en: "Logs only record events like connection/permission/calibration — no posture data, stored locally only."
+        case .ja: "ログは接続・権限・キャリブレーション等のイベントのみ。姿勢データは含まず本機のみに保存。"
+        case .ko: "로그는 연결/권한/보정 이벤트만 기록하며 자세 데이터는 없습니다. 이 Mac에만 저장됩니다."
+        }
+    }
+
     // MARK: 支持作者（赞助）
 
     public static var secSupport: String {

@@ -68,6 +68,7 @@ final class PostureMonitor: ObservableObject {
 
     func start() {
         permissionDenied = provider.authorizationDenied
+        DebugLog.log("监测启动 · 权限拒绝=\(permissionDenied)")
         guard isMonitoring else { return }
         recalibrate()   // provider 重启会重取参考帧，旧零点作废
         provider.start()
@@ -87,6 +88,7 @@ final class PostureMonitor: ObservableObject {
         window.removeAll()
         provider.resetReference()
         if flash {
+            DebugLog.log("手动坐直校准")
             calibrationFlash = true
             Task { [weak self] in
                 try? await Task.sleep(nanoseconds: 1_500_000_000)
@@ -113,6 +115,7 @@ final class PostureMonitor: ObservableObject {
 
     private func handleConnection(_ connected: Bool) {
         isWearing = connected
+        DebugLog.log(connected ? "耳机已连接" : "耳机已断开")
         if !connected {
             // 摘下耳机：暂停统计、复位状态
             window.removeAll()
