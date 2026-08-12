@@ -111,9 +111,21 @@ struct SettingsView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
+            Section(L10n.secSupport) {
+                HStack(spacing: 10) {
+                    Button("☕ Buy Me a Coffee") {
+                        NSWorkspace.shared.open(URL(string: "https://buymeacoffee.com/mikeyzhou")!)
+                    }
+                    DonateQRButton(title: L10n.alipayLabel, imageName: "alipay")
+                    DonateQRButton(title: L10n.wechatLabel, imageName: "wechat")
+                }
+                Text(L10n.supportDesc)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
         }
         .formStyle(.grouped)
-        .frame(width: 420, height: 700)
+        .frame(width: 420, height: 740)
         .sheet(isPresented: $showDirectionCal, onDismiss: { appState.refreshSamplingRate() }) {
             // sheet 期间传感器全速：方向校准需要实时跟随
             DirectionCalibrationView(
@@ -125,5 +137,43 @@ struct SettingsView: View {
             .frame(width: 380, height: 400)
             .onAppear { monitor.setHighFrequency(true) }
         }
+    }
+}
+
+/// 收款码按钮：点击弹出二维码气泡
+private struct DonateQRButton: View {
+    let title: String
+    let imageName: String
+    @State private var show = false
+
+    var body: some View {
+        Button(title) { show = true }
+            .popover(isPresented: $show, arrowEdge: .bottom) {
+                VStack(spacing: 8) {
+                    if let url = Self.imageURL(imageName), let img = NSImage(contentsOf: url) {
+                        Image(nsImage: img)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 220)
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                    }
+                    Text(L10n.scanHint)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(12)
+            }
+    }
+
+    /// App 内从 bundle 读；开发模式（swift run）回退到源码目录 Resources/Donate/
+    private static func imageURL(_ name: String) -> URL? {
+        if let url = Bundle.main.url(forResource: name, withExtension: "jpg") { return url }
+        let project = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()  // Settings
+            .deletingLastPathComponent()  // NeckUp
+            .deletingLastPathComponent()  // Sources
+            .deletingLastPathComponent()  // 项目根
+        let url = project.appendingPathComponent("Resources/Donate/\(name).jpg")
+        return FileManager.default.fileExists(atPath: url.path) ? url : nil
     }
 }

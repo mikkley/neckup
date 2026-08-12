@@ -584,6 +584,45 @@ extension L10n {
         }
     }
 
+    // MARK: 支持作者（赞助）
+
+    public static var secSupport: String {
+        switch resolved {
+        case .zhHans, .system: "支持 NeckUp"
+        case .en: "Support NeckUp"
+        case .ja: "NeckUp を応援"
+        case .ko: "NeckUp 후원하기"
+        }
+    }
+    public static var supportDesc: String {
+        switch resolved {
+        case .zhHans, .system: "免费开源，没有广告。如果它帮你抬起了头，可以请作者喝杯咖啡。"
+        case .en: "Free and open source, no ads. If it helped you lift your head, you can buy the author a coffee."
+        case .ja: "無料・オープンソース・広告なし。役に立ったら作者にコーヒーを一杯どうぞ。"
+        case .ko: "무료 오픈소스, 광고 없음. 도움이 되었다면 개발자에게 커피 한 잔을 선물하세요."
+        }
+    }
+    public static var alipayLabel: String {
+        switch resolved {
+        case .zhHans, .system: "支付宝"
+        case .en, .ja, .ko: "Alipay"
+        }
+    }
+    public static var wechatLabel: String {
+        switch resolved {
+        case .zhHans, .system: "微信支付"
+        case .en, .ja, .ko: "WeChat Pay"
+        }
+    }
+    public static var scanHint: String {
+        switch resolved {
+        case .zhHans, .system: "手机扫码即可支持"
+        case .en: "Scan with your phone to support"
+        case .ja: "スマホでスキャンして応援"
+        case .ko: "휴대폰으로 스캔하여 후원"
+        }
+    }
+
     // MARK: 灵动岛
 
     public static var statusPaused: String {

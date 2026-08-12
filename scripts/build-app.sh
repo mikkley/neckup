@@ -11,6 +11,10 @@ mkdir -p "$APP/Contents/MacOS"
 cp .build/release/NeckUp "$APP/Contents/MacOS/NeckUp"
 cp Resources/Info.plist "$APP/Contents/Info.plist"
 
+# 收款码等资源（设置页「支持 NeckUp」）
+mkdir -p "$APP/Contents/Resources"
+cp Resources/Donate/*.jpg "$APP/Contents/Resources/"
+
 # ad-hoc 签名，保证本地可运行（分发需 Developer ID + 公证）
 codesign --force --sign - "$APP" || echo "警告: ad-hoc 签名失败，仍可尝试直接运行"
 

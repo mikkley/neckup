@@ -22,7 +22,7 @@ final class SettingsWindowController {
                 .environmentObject(state.monitor)
                 .environmentObject(state)
             let w = NSWindow(
-                contentRect: NSRect(x: 0, y: 0, width: 420, height: 700),
+                contentRect: NSRect(x: 0, y: 0, width: 420, height: 740),
                 styleMask: [.titled, .closable],
                 backing: .buffered, defer: false
             )

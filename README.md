@@ -73,3 +73,10 @@ open NeckUp.app
 ## 开源
 
 免费开源，欢迎 issue 和 PR。
+
+## 支持 NeckUp
+
+如果它帮你抬起了头，可以请作者喝杯咖啡 ☕
+
+- **美元**：[Buy Me a Coffee](https://buymeacoffee.com/mikeyzhou)
+- **人民币**：[支付宝 / 微信支付收款码](docs/donate.md)
