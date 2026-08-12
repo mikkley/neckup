@@ -673,6 +673,14 @@ extension L10n {
         case .ko: "캐릭터가 따라 움직여요. 얼굴이 중앙이면 바른 자세"
         }
     }
+    public static var calibratedFlash: String {
+        switch resolved {
+        case .zhHans, .system: "已校准，小人回正了 ✓"
+        case .en: "Calibrated — buddy recentered ✓"
+        case .ja: "キャリブレーション完了 ✓"
+        case .ko: "보정 완료, 캐릭터가 중앙으로 ✓"
+        }
+    }
     public static var pauseMonitoring: String {
         switch resolved {
         case .zhHans, .system: "暂停监测"
@@ -739,10 +747,10 @@ extension L10n {
     }
     public static var dayNoData: String {
         switch resolved {
-        case .zhHans, .system: "还没开始记录"
-        case .en: "No records yet"
-        case .ja: "記録はまだありません"
-        case .ko: "아직 기록 없음"
+        case .zhHans, .system: "戴着就自动记录"
+        case .en: "Records automatically"
+        case .ja: "装着するだけで自動記録"
+        case .ko: "착용하면 자동 기록"
         }
     }
     public static var dayGreat: String {
@@ -771,10 +779,10 @@ extension L10n {
     }
     public static var dayDescNoData: String {
         switch resolved {
-        case .zhHans, .system: "今天的记录会显示在这里"
-        case .en: "Today’s stats will show here"
-        case .ja: "今日の記録はここに表示"
-        case .ko: "오늘의 기록이 여기에 표시돼요"
+        case .zhHans, .system: "不用点任何东西，统计会随佩戴出现在这里"
+        case .en: "Nothing to start — stats build up as you wear AirPods"
+        case .ja: "手動開始は不要。装着中に自動で集計されます"
+        case .ko: "수동 시작 없이 착용만 하면 자동 집계돼요"
         }
     }
     public static var dayDescGreat: String {
@@ -941,6 +949,81 @@ extension L10n {
         case .en: "Try the move with the buddy"
         case .ja: "マスコットと一緒に動きを試そう"
         case .ko: "캐릭터와 함께 동작을 따라 해 보세요"
+        }
+    }
+
+    // MARK: 检查更新
+
+    public static var menuCheckUpdate: String {
+        switch resolved {
+        case .zhHans, .system: "检查更新…"
+        case .en: "Check for Updates…"
+        case .ja: "アップデートを確認…"
+        case .ko: "업데이트 확인…"
+        }
+    }
+    public static func menuUpdateAvailable(_ v: String) -> String {
+        switch resolved {
+        case .zhHans, .system: "下载新版本 v\(v)…"
+        case .en: "Get v\(v)…"
+        case .ja: "新バージョン v\(v) を入手…"
+        case .ko: "새 버전 v\(v) 받기…"
+        }
+    }
+    public static func updateAvailableTitle(_ v: String) -> String {
+        switch resolved {
+        case .zhHans, .system: "发现新版本 v\(v)"
+        case .en: "NeckUp v\(v) is available"
+        case .ja: "新バージョン v\(v) があります"
+        case .ko: "새 버전 v\(v)이 나왔어요"
+        }
+    }
+    public static var updateAvailableBody: String {
+        switch resolved {
+        case .zhHans, .system: "Homebrew 安装：复制命令到「终端」执行即可升级；\n手动安装：打开下载页获取最新 zip。"
+        case .en: "Homebrew install: copy the command and run it in Terminal.\nManual install: open the download page for the latest zip."
+        case .ja: "Homebrew の場合：コマンドをコピーして「ターミナル」で実行。\n手動の場合：ダウンロードページから最新 zip を入手。"
+        case .ko: "Homebrew 설치: 명령을 복사해 터미널에서 실행하세요.\n수동 설치: 다운로드 페이지에서 최신 zip을 받으세요."
+        }
+    }
+    public static var updateCopyBrew: String {
+        switch resolved {
+        case .zhHans, .system: "复制 brew 升级命令"
+        case .en: "Copy brew Command"
+        case .ja: "brew コマンドをコピー"
+        case .ko: "brew 명령 복사"
+        }
+    }
+    public static var updateOpenRelease: String {
+        switch resolved {
+        case .zhHans, .system: "打开下载页"
+        case .en: "Open Download Page"
+        case .ja: "ダウンロードページを開く"
+        case .ko: "다운로드 페이지 열기"
+        }
+    }
+    public static var updateUpToDate: String {
+        switch resolved {
+        case .zhHans, .system: "已是最新版本"
+        case .en: "You're on the latest version"
+        case .ja: "最新バージョンです"
+        case .ko: "최신 버전입니다"
+        }
+    }
+    public static var updateCheckFailed: String {
+        switch resolved {
+        case .zhHans, .system: "检查失败，请检查网络后重试"
+        case .en: "Check failed — check your network and retry"
+        case .ja: "確認に失敗。ネットワークを確認してください"
+        case .ko: "확인 실패. 네트워크 확인 후 다시 시도하세요"
+        }
+    }
+    public static var updateDevBuild: String {
+        switch resolved {
+        case .zhHans, .system: "开发模式构建，跳过版本检查"
+        case .en: "Dev build — version check skipped"
+        case .ja: "開発ビルドのためチェックをスキップ"
+        case .ko: "개발 빌드라 버전 확인을 건너뜻니다"
         }
     }
 }

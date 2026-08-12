@@ -23,6 +23,7 @@ final class AppState: ObservableObject {
     let stats: StatsStore
     let codex: CodexStore
     let sound: SoundEngine
+    let updateChecker = UpdateChecker()
 
     /// 游戏渲染视图状态（GameContainerView 只读；nil 表示无对局）
     @Published private(set) var gameViewState: GameViewState?
@@ -127,6 +128,7 @@ final class AppState: ObservableObject {
 
     func start() {
         monitor.start()
+        updateChecker.checkAutomatically()
     }
 
     /// 传感器采样率调度：番茄钟专注期/对局期（含教学卡）25Hz，其余低功耗（引导页打开时由引导控制器临时拉满）

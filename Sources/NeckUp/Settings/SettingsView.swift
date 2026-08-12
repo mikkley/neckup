@@ -100,7 +100,7 @@ struct SettingsView: View {
                 }
             }
             Section(L10n.secSensor) {
-                Button(L10n.recalibrateButton) { monitor.recalibrate() }
+                Button(L10n.recalibrateButton) { monitor.recalibrate(flash: true) }
                 Button(L10n.dirCalButton) { showDirectionCal = true }
                     .disabled(!monitor.isWearing)
                 Text(L10n.dirCalDesc)

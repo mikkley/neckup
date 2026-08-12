@@ -16,6 +16,8 @@ final class PostureMonitor: ObservableObject {
     @Published private(set) var isBadPosture = false
     @Published private(set) var isReminding = false
     @Published private(set) var permissionDenied = false
+    /// 「坐直校准」即时反馈：手动校准后 ~1.5s 内为 true，岛上显示「已校准 ✓」
+    @Published private(set) var calibrationFlash = false
     @Published private(set) var reminderText = ReminderPool.next()
     @Published var isMonitoring = true {
         didSet { applyMonitoringState() }
@@ -79,10 +81,18 @@ final class PostureMonitor: ObservableObject {
     }
 
     /// 重新校准：以下一帧姿态为零点（同时重置传感器参考帧，保证相对旋转落在 Euler 稳定区）
-    func recalibrate() {
+    /// flash: 用户手动触发时置 true，岛上短暂显示「已校准 ✓」反馈
+    func recalibrate(flash: Bool = false) {
         calibration = nil
         window.removeAll()
         provider.resetReference()
+        if flash {
+            calibrationFlash = true
+            Task { [weak self] in
+                try? await Task.sleep(nanoseconds: 1_500_000_000)
+                self?.calibrationFlash = false
+            }
+        }
     }
 
     /// 番茄钟专注期用 25Hz 全速，其余时段低功耗 0.5Hz

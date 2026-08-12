@@ -201,9 +201,15 @@ struct NotchView: View {
                 // 无权限：引导行替换提示行（控制行保留——番茄钟不依赖传感器）
                 permissionGuide
             } else {
-                Text(L10n.avatarHint)
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
+                if monitor.calibrationFlash {
+                    Text(L10n.calibratedFlash)
+                        .font(.caption2)
+                        .foregroundStyle(.green)
+                } else {
+                    Text(L10n.avatarHint)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
             }
 
             HStack(spacing: 8) {
@@ -213,7 +219,7 @@ struct NotchView: View {
                     monitor.isMonitoring.toggle()
                 }
                 .buttonStyle(.bordered)
-                Button(L10n.recalibrate) { monitor.recalibrate() }
+                Button(L10n.recalibrate) { monitor.recalibrate(flash: true) }
                     .buttonStyle(.bordered)
             }
             .controlSize(.small)
