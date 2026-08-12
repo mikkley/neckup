@@ -2,6 +2,12 @@ import XCTest
 @testable import NeckUpCore
 
 final class TwinBeetleGameTests: XCTestCase {
+    /// 文案断言与宿主机 locale 无关：钉住中文
+    override func setUp() {
+        super.setUp()
+        UserDefaults.standard.set("zh-Hans", forKey: "appLanguage")
+    }
+
     private let t0 = Date(timeIntervalSince1970: 1_000_000)
 
     /// 推进到第一只甲虫前摇阶段（waiting 4s → telegraph，side = +1，右转格挡）

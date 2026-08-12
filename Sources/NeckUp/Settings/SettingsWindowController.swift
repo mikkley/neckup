@@ -1,4 +1,5 @@
 import AppKit
+import NeckUpCore
 import SwiftUI
 
 /// 设置窗口：手动托管 NSWindow（accessory 应用上 SwiftUI Settings 场景的
@@ -21,17 +22,17 @@ final class SettingsWindowController {
                 .environmentObject(state.monitor)
                 .environmentObject(state)
             let w = NSWindow(
-                contentRect: NSRect(x: 0, y: 0, width: 420, height: 640),
+                contentRect: NSRect(x: 0, y: 0, width: 420, height: 700),
                 styleMask: [.titled, .closable],
                 backing: .buffered, defer: false
             )
-            w.title = "NeckUp 设置"
             w.contentView = NSHostingView(rootView: root)
             w.center()
             w.isReleasedWhenClosed = false
             w.makeKeyAndOrderFront(nil)
             window = w
         }
+        window?.title = L10n.settingsWindowTitle   // 每次打开刷新（拾取语言切换）
         NSApp.activate(ignoringOtherApps: true)
     }
 }

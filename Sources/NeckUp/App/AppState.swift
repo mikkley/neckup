@@ -158,7 +158,7 @@ final class AppState: ObservableObject {
         if settings.gameEnabled {
             startGame()
         } else {
-            Notifier.send(title: "NeckUp", body: "坐了很久啦，起来活动一下脖子吧")
+            Notifier.send(title: "NeckUp", body: L10n.breakBody)
         }
     }
 
@@ -208,7 +208,7 @@ final class AppState: ObservableObject {
         // 首次进入展示一次性安全提示（设计文档 §7）
         if !UserDefaults.standard.bool(forKey: "gameSafetyHintShown") {
             UserDefaults.standard.set(true, forKey: "gameSafetyHintShown")
-            safetyHint = "有颈椎病史、手麻、头晕请先咨询医生；游戏中任何不适请立即停止"
+            safetyHint = L10n.safetyHint
             Task { [weak self] in
                 try? await Task.sleep(nanoseconds: 8_000_000_000)
                 self?.safetyHint = nil

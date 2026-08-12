@@ -52,12 +52,12 @@ struct OnboardingView: View {
             Spacer()
             Text("🐢")
                 .font(.system(size: 56))
-            Text("欢迎使用 NeckUp")
+            Text(L10n.welcomeTitle)
                 .font(.title.weight(.semibold))
-            Text("脖子曲度变直这件事，自己是感觉不到的。\nNeckUp 用 AirPods 的传感器实时感知你的低头，\n在该抬头的时候轻轻提醒你。")
+            Text(L10n.welcomeBody)
                 .multilineTextAlignment(.center)
                 .foregroundStyle(.secondary)
-            Text("使用前请准备好 AirPods（Pro / 3 代 / Max / Beats Fit Pro）")
+            Text(L10n.welcomeAirpods)
                 .font(.footnote)
                 .foregroundStyle(.tertiary)
             Spacer()
@@ -77,31 +77,31 @@ struct OnboardingView: View {
                 .font(.system(size: 48))
                 .foregroundStyle(permissionGranted ? .green : .orange)
                 .contentTransition(.symbolEffect(.replace))
-            Text("授权「运动与健身」权限")
+            Text(L10n.permTitle)
                 .font(.title2.weight(.semibold))
-            Text("NeckUp 只读取 AirPods 的头部姿态数据，\n所有记录只保存在本机，绝不上传。")
+            Text(L10n.permBody)
                 .multilineTextAlignment(.center)
                 .foregroundStyle(.secondary)
 
             if permissionGranted {
-                Text("已授权 ✓")
+                Text(L10n.permGranted)
                     .foregroundStyle(.green)
             } else if authStatus == .denied || authStatus == .restricted {
-                Text("权限曾被拒绝，需要在系统设置里手动打开")
+                Text(L10n.permDenied)
                     .font(.footnote)
                     .foregroundStyle(.orange)
-                Button("打开系统设置") {
+                Button(L10n.openSystemSettings) {
                     if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Motion") {
                         NSWorkspace.shared.open(url)
                     }
                 }
             } else {
-                Button("去授权") { monitor.start() }
+                Button(L10n.permAuthorize) { monitor.start() }
                     .buttonStyle(.borderedProminent)
             }
 
             if permissionGranted, !monitor.isWearing {
-                Text("还没检测到 AirPods，戴上后自动开始；也可以先跳过")
+                Text(L10n.permNoAirpods)
                     .font(.footnote)
                     .foregroundStyle(.tertiary)
             }
@@ -113,7 +113,7 @@ struct OnboardingView: View {
 
     private var calibratePage: some View {
         VStack(spacing: 12) {
-            Text("校准你的坐姿")
+            Text(L10n.calTitle)
                 .font(.title2.weight(.semibold))
 
             HeadAvatar(pose: monitor.headPose)
@@ -121,20 +121,20 @@ struct OnboardingView: View {
                 .background(.quaternary, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
 
             if !monitor.isWearing {
-                Text("未检测到 AirPods。可以先跳过，之后随时在岛上点「坐直校准」。")
+                Text(L10n.calNoAirpods)
                     .font(.footnote)
                     .foregroundStyle(.tertiary)
             } else if calibrated {
-                Text("校准完成！点点头、转转头，小人会跟着你动 🐢")
+                Text(L10n.calDone)
                     .font(.footnote)
                     .foregroundStyle(.green)
             } else {
-                Text("戴上 AirPods，坐直、目视前方，然后点击校准")
+                Text(L10n.calInstruction)
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
 
-            Button("我坐直了，校准") {
+            Button(L10n.calButton) {
                 monitor.recalibrate()
                 calibrated = true
             }
@@ -171,29 +171,29 @@ struct OnboardingView: View {
     private var gamePage: some View {
         VStack(alignment: .leading, spacing: 14) {
             Spacer()
-            Text("休息时，打一局")
+            Text(L10n.obGameTitle)
                 .font(.title2.weight(.semibold))
-            Text("番茄钟休息或活动提醒到点时，岛上会开一局 60 秒头控小游戏——\n用点头、转头、侧屈打跑五只「僵硬怪」，顺便把脖子活动开。\n不玩没有任何惩罚，点一下岛就能收掉。")
+            Text(L10n.obGameBody)
                 .foregroundStyle(.secondary)
 
             Form {
-                Toggle("休息段打怪小游戏", isOn: $settings.gameEnabled)
-                Picker("定时活动提醒", selection: $settings.breakIntervalMin) {
-                    Text("跟随番茄钟").tag(0.0)
-                    Text("每 30 分钟").tag(30.0)
-                    Text("每 45 分钟").tag(45.0)
-                    Text("每 60 分钟").tag(60.0)
+                Toggle(L10n.obGameToggle, isOn: $settings.gameEnabled)
+                Picker(L10n.obBreakPicker, selection: $settings.breakIntervalMin) {
+                    Text(L10n.followPomodoro).tag(0.0)
+                    Text(L10n.everyMinutes(30)).tag(30.0)
+                    Text(L10n.everyMinutes(45)).tag(45.0)
+                    Text(L10n.everyMinutes(60)).tag(60.0)
                 }
-                Picker("提醒灵敏度", selection: sensitivity) {
-                    Text("严格").tag(0)
-                    Text("标准").tag(1)
-                    Text("宽松").tag(2)
+                Picker(L10n.sensitivityLabel, selection: sensitivity) {
+                    Text(L10n.sensStrict).tag(0)
+                    Text(L10n.sensStandard).tag(1)
+                    Text(L10n.sensRelaxed).tag(2)
                 }
                 .pickerStyle(.segmented)
             }
             .formStyle(.grouped)
 
-            Text("这些以后都能在菜单栏「设置…」里随时修改。")
+            Text(L10n.obSettingsHint)
                 .font(.footnote)
                 .foregroundStyle(.tertiary)
             Spacer()
@@ -204,7 +204,7 @@ struct OnboardingView: View {
 
     private var bottomBar: some View {
         HStack {
-            Button("上一步") { step -= 1 }
+            Button(L10n.back) { step -= 1 }
                 .disabled(step == 0)
             Spacer()
             HStack(spacing: 6) {
@@ -216,11 +216,11 @@ struct OnboardingView: View {
             }
             Spacer()
             if step < 3 {
-                Button("下一步") { step += 1 }
+                Button(L10n.next) { step += 1 }
                     .buttonStyle(.borderedProminent)
                     .keyboardShortcut(.defaultAction)
             } else if step > 3 {
-                Button("完成") { onFinish() }
+                Button(L10n.done) { onFinish() }
                     .buttonStyle(.borderedProminent)
                     .keyboardShortcut(.defaultAction)
             }

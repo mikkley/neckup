@@ -119,7 +119,7 @@ public struct SlimeAxeGame: Sendable {
                 if speed > SafetyLimits.rejectSpeed {
                     // 甩头：史莱姆被吓跑，不记分不断 combo
                     events.append(.tooFast)
-                    showMessage("慢一点 🐢", for: 2.5, at: now)
+                    showMessage(L10n.tooFast, for: 2.5, at: now)
                 } else if speed <= SafetyLimits.warnSpeed {
                     // 命中：combo+1、水滴+1、史莱姆重生
                     pendingRep = true
@@ -168,7 +168,7 @@ public struct SlimeAxeGame: Sendable {
         if !idleHintShown, now.timeIntervalSince(lastActiveAt) >= Self.idleTimeout {
             idleHintShown = true
             events.append(.idleHint)
-            showMessage("跟着史莱姆点点头", for: 5, at: now)
+            showMessage(monster.idleHintText, for: 5, at: now)
         }
         // 60s 结算
         if now.timeIntervalSince(startAt) >= Self.duration {

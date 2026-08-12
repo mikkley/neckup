@@ -19,29 +19,38 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
-            Section("姿势提醒") {
-                Picker("提醒灵敏度", selection: sensitivity) {
-                    Text("严格").tag(0)
-                    Text("标准").tag(1)
-                    Text("宽松").tag(2)
+            Section(L10n.secLanguage) {
+                Picker(L10n.languageLabel, selection: $settings.language) {
+                    Text(L10n.languageSystem).tag("")
+                    Text("中文").tag("zh-Hans")
+                    Text("English").tag("en")
+                    Text("日本語").tag("ja")
+                    Text("한국어").tag("ko")
+                }
+            }
+            Section(L10n.secPosture) {
+                Picker(L10n.sensitivityLabel, selection: sensitivity) {
+                    Text(L10n.sensStrict).tag(0)
+                    Text(L10n.sensStandard).tag(1)
+                    Text(L10n.sensRelaxed).tag(2)
                 }
                 .pickerStyle(.segmented)
-                Text("严格：稍微低头就提醒；宽松：低得比较明显才提醒。")
+                Text(L10n.sensDesc)
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                Stepper("持续时长：\(Int(settings.sustainedSec)) 秒",
+                Stepper(L10n.sustainedSec(Int(settings.sustainedSec)),
                         value: $settings.sustainedSec, in: 2 ... 15)
-                Toggle("启用低头提醒", isOn: $settings.remindersEnabled)
-                Toggle("音效与提示音", isOn: $settings.soundEnabled)
+                Toggle(L10n.remindersToggle, isOn: $settings.remindersEnabled)
+                Toggle(L10n.soundToggle, isOn: $settings.soundEnabled)
             }
-            Section("休息段微游戏") {
-                Toggle("番茄休息时打怪舒展", isOn: $settings.gameEnabled)
-                Toggle("佛系模式（山峰不枯萎）", isOn: $settings.zenMode)
-                Text("休息 5 分钟里，用缓慢的颈部动作打跑僵硬怪；可随时关闭。")
+            Section(L10n.secGame) {
+                Toggle(L10n.gameToggle, isOn: $settings.gameEnabled)
+                Toggle(L10n.zenToggle, isOn: $settings.zenMode)
+                Text(L10n.gameDesc)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
-            Section("游戏玩法") {
+            Section(L10n.secHowToPlay) {
                 ForEach(MonsterType.allCases, id: \.self) { monster in
                     Button {
                         appState.startPractice(monster)
@@ -56,7 +65,7 @@ struct SettingsView: View {
                                     .foregroundStyle(.secondary)
                             }
                             Spacer()
-                            Text("试玩")
+                            Text(L10n.tryIt)
                                 .font(.caption)
                                 .foregroundStyle(.tertiary)
                         }
@@ -64,53 +73,53 @@ struct SettingsView: View {
                     }
                     .buttonStyle(.plain)
                 }
-                Text("点任意一只即可在灵动岛上试玩；首次会先播教学卡。正式对局在番茄钟休息段自动开始。")
+                Text(L10n.howToPlayDesc)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
-            Section("定时活动") {
-                Picker("活动提醒", selection: $settings.breakIntervalMin) {
-                    Text("关闭").tag(0.0)
-                    Text("每 30 分钟").tag(30.0)
-                    Text("每 45 分钟").tag(45.0)
-                    Text("每 60 分钟").tag(60.0)
+            Section(L10n.secBreak) {
+                Picker(L10n.breakPickerLabel, selection: $settings.breakIntervalMin) {
+                    Text(L10n.off).tag(0.0)
+                    Text(L10n.everyMinutes(30)).tag(30.0)
+                    Text(L10n.everyMinutes(45)).tag(45.0)
+                    Text(L10n.everyMinutes(60)).tag(60.0)
                 }
-                Text("不用番茄钟也能定时活动：到点开一局打怪（游戏已关闭则只发通知）。番茄钟运行期间自动让位。")
+                Text(L10n.breakDesc)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
-            Section("灵动岛") {
-                Picker("显示在", selection: $settings.displayID) {
-                    Text("自动（刘海屏优先）").tag("")
+            Section(L10n.secIsland) {
+                Picker(L10n.showOn, selection: $settings.displayID) {
+                    Text(L10n.displayAuto).tag("")
                     ForEach(NSScreen.screens, id: \.self) { screen in
                         Text(screen.localizedName).tag(NotchGeometry.displayID(of: screen))
                     }
                 }
-                Button("重新打开新手指引") {
+                Button(L10n.reopenOnboarding) {
                     NotificationCenter.default.post(name: .neckUpShowOnboarding, object: nil)
                 }
             }
-            Section("传感器") {
-                Button("坐直后点此校准") { monitor.recalibrate() }
-                Button("方向校准…") { showDirectionCal = true }
+            Section(L10n.secSensor) {
+                Button(L10n.recalibrateButton) { monitor.recalibrate() }
+                Button(L10n.dirCalButton) { showDirectionCal = true }
                     .disabled(!monitor.isWearing)
-                Text("转头/侧倾时小人或游戏方向反了？戴上 AirPods 做一次方向校准即可。")
+                Text(L10n.dirCalDesc)
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                Toggle("使用模拟数据（无 AirPods 调试）", isOn: $settings.mockMode)
-                Text("模拟数据开关需重启 App 后生效；也可用 --mock 启动参数临时开启。")
+                Toggle(L10n.mockToggle, isOn: $settings.mockMode)
+                Text(L10n.mockDesc)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
         }
         .formStyle(.grouped)
-        .frame(width: 420, height: 660)
+        .frame(width: 420, height: 700)
         .sheet(isPresented: $showDirectionCal, onDismiss: { appState.refreshSamplingRate() }) {
             // sheet 期间传感器全速：方向校准需要实时跟随
             DirectionCalibrationView(
                 onDone: { showDirectionCal = false },
                 onSkip: { showDirectionCal = false },
-                skipLabel: "取消"
+                cancelStyle: true
             )
             .padding(20)
             .frame(width: 380, height: 400)

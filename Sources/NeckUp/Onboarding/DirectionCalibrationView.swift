@@ -12,7 +12,8 @@ struct DirectionCalibrationView: View {
     /// 全部完成后的回调；跳过/取消回调
     let onDone: () -> Void
     let onSkip: () -> Void
-    var skipLabel = "跳过"
+    /// true = 设置页弹窗语义（显示「取消」），false = 引导页（显示「跳过」）
+    var cancelStyle = false
 
     /// 0=坐直归零 1=向左转头 2=左侧倾 3=完成
     @State private var step = 0
@@ -28,7 +29,7 @@ struct DirectionCalibrationView: View {
 
     var body: some View {
         VStack(spacing: 12) {
-            Text("方向校准")
+            Text(L10n.dirCalTitle)
                 .font(.title2.weight(.semibold))
 
             HeadAvatar(pose: monitor.headPose)
@@ -36,7 +37,7 @@ struct DirectionCalibrationView: View {
                 .background(.quaternary, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
 
             if !monitor.isWearing {
-                Text("未检测到 AirPods。戴上耳机后再校准，也可以先跳过。")
+                Text(L10n.dirCalNoAirpods)
                     .font(.footnote)
                     .foregroundStyle(.tertiary)
             } else {
@@ -46,7 +47,7 @@ struct DirectionCalibrationView: View {
                 if step == 1 || step == 2 {
                     ProgressView(value: progress)
                         .frame(width: 160)
-                    Text(armed ? "识别到动作后，小人会立刻转向同侧" : "请先回正坐直，再开始做动作")
+                    Text(armed ? L10n.dirCalDetected : L10n.dirCalRecenter)
                         .font(.caption)
                         .foregroundStyle(.tertiary)
                 }
@@ -54,7 +55,7 @@ struct DirectionCalibrationView: View {
 
             switch step {
             case 0:
-                Button("我坐直了，开始") {
+                Button(L10n.dirCalStart) {
                     monitor.recalibrate()   // 零点与方向一起校准：先归零再做动作
                     step = 1
                 }
@@ -62,11 +63,11 @@ struct DirectionCalibrationView: View {
                 .keyboardShortcut(.defaultAction)
                 .disabled(!monitor.isWearing)
             case 3:
-                Button("完成", action: onDone)
+                Button(L10n.done, action: onDone)
                     .buttonStyle(.borderedProminent)
                     .keyboardShortcut(.defaultAction)
             default:
-                Button(skipLabel, action: onSkip)
+                Button(cancelStyle ? L10n.cancel : L10n.skip, action: onSkip)
                     .font(.footnote)
                     .foregroundStyle(.secondary)
                     .buttonStyle(.plain)
@@ -77,10 +78,10 @@ struct DirectionCalibrationView: View {
 
     private var instruction: String {
         switch step {
-        case 0: "第 1 步（共 3 步）：坐直、目视前方，\n让小人回到正中"
-        case 1: "第 2 步（共 3 步）：慢慢向**左**转头，像看屏幕左边缘，保持住"
-        case 2: "第 3 步（共 3 步）：向**左**侧倾，左耳找左肩，保持住"
-        default: "完成！动一动试试——小人现在应该和你同向了 🐢"
+        case 0: L10n.dirCalStep1
+        case 1: L10n.dirCalStep2
+        case 2: L10n.dirCalStep3
+        default: L10n.dirCalDone
         }
     }
 

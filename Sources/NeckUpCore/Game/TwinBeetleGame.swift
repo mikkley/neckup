@@ -124,7 +124,7 @@ public struct TwinBeetleGame: Sendable {
             tooFastLatched = true
             holdTime = 0
             events.append(.tooFast)
-            showMessage("慢一点 🐢", for: 2.5, at: now)
+            showMessage(L10n.tooFast, for: 2.5, at: now)
         }
 
         if phase != .waiting {

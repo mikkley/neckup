@@ -40,11 +40,11 @@ struct TutorialCardView: View {
                 HeadAvatar(pose: monitor.headPose)
                     .frame(width: 44, height: 44)
                     .background(.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
-                Text("跟着小人试试这个动作")
+                Text(L10n.tutorialTryMove)
                     .font(.caption)
                     .foregroundStyle(.white.opacity(0.55))
             }
-            Button("开始") { appState.beginGame(monster) }
+            Button(L10n.start) { appState.beginGame(monster) }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.small)
         }

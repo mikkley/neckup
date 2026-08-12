@@ -113,12 +113,12 @@ struct NotchView: View {
     /// 左侧状态小字（零学习：直接说状态，不给数字）
     private var postureWord: String {
         if appState.islandState == .game { return "" }   // 对局中不显示（评估豁免期，避免陈旧文案）
-        if !monitor.isMonitoring { return "已暂停" }
-        if !monitor.isWearing { return "未佩戴" }
+        if !monitor.isMonitoring { return L10n.statusPaused }
+        if !monitor.isWearing { return L10n.statusNotWearing }
         switch monitor.status {
-        case .good: return "挺好"
-        case .borderline: return "有点低"
-        case .bad: return "快抬头"
+        case .good: return L10n.statusGood
+        case .borderline: return L10n.statusLow
+        case .bad: return L10n.statusBad
         case .idle: return ""
         }
     }
@@ -143,8 +143,8 @@ struct NotchView: View {
     /// 收缩态右侧：番茄倒计时 > 已暂停 > 未佩戴；平时只留呼吸圆点，不给数字
     private var trailingText: String {
         if pomodoro.phase != .idle { return pomodoro.displayString }
-        if !monitor.isMonitoring { return "已暂停" }
-        if !monitor.isWearing { return "未佩戴" }
+        if !monitor.isMonitoring { return L10n.statusPaused }
+        if !monitor.isWearing { return L10n.statusNotWearing }
         return ""
     }
 
@@ -201,7 +201,7 @@ struct NotchView: View {
                 // 无权限：引导行替换提示行（控制行保留——番茄钟不依赖传感器）
                 permissionGuide
             } else {
-                Text("小人跟着你动，脸正居中就是坐直了")
+                Text(L10n.avatarHint)
                     .font(.caption2)
                     .foregroundStyle(.tertiary)
             }
@@ -209,11 +209,11 @@ struct NotchView: View {
             HStack(spacing: 8) {
                 pomodoroControls
                 Spacer()
-                Button(monitor.isMonitoring ? "暂停监测" : "继续监测") {
+                Button(monitor.isMonitoring ? L10n.pauseMonitoring : L10n.resumeMonitoring) {
                     monitor.isMonitoring.toggle()
                 }
                 .buttonStyle(.bordered)
-                Button("坐直校准") { monitor.recalibrate() }
+                Button(L10n.recalibrate) { monitor.recalibrate() }
                     .buttonStyle(.bordered)
             }
             .controlSize(.small)
@@ -225,23 +225,23 @@ struct NotchView: View {
 
     /// 当前姿势状态 → 直接告诉用户好不好、该怎么做
     private var statusSentence: String {
-        guard monitor.isMonitoring else { return "监测已暂停" }
-        guard monitor.isWearing else { return "戴上 AirPods 开始守护" }
+        guard monitor.isMonitoring else { return L10n.sentencePaused }
+        guard monitor.isWearing else { return L10n.sentenceNotWearing }
         switch monitor.status {
-        case .good: return "姿势不错，继续保持"
-        case .borderline: return "有点低头，抬一点"
-        case .bad: return "低头太久了，抬一点 🐢"
+        case .good: return L10n.sentenceGood
+        case .borderline: return L10n.sentenceLow
+        case .bad: return L10n.sentenceBad
         case .idle: return ""
         }
     }
 
     /// 今日评分 → 三档状态词
     private var dayStatusWord: String {
-        if !hasDataToday { return "还没开始记录" }
+        if !hasDataToday { return L10n.dayNoData }
         switch stats.today.score {
-        case 80...: return "今天很棒"
-        case 60...: return "今天还行"
-        default: return "要注意了"
+        case 80...: return L10n.dayGreat
+        case 60...: return L10n.dayOk
+        default: return L10n.dayWarning
         }
     }
 
@@ -256,11 +256,11 @@ struct NotchView: View {
 
     /// 一句人话的今日总结，不给数字
     private var daySummarySentence: String {
-        if !hasDataToday { return "今天的记录会显示在这里" }
+        if !hasDataToday { return L10n.dayDescNoData }
         switch stats.today.score {
-        case 80...: return "今天状态很棒，继续保持"
-        case 60...: return "今天还不错，记得偶尔抬头"
-        default: return "今天低头有点多，多抬头休息"
+        case 80...: return L10n.dayDescGreat
+        case 60...: return L10n.dayDescOk
+        default: return L10n.dayDescWarning
         }
     }
 
@@ -272,15 +272,15 @@ struct NotchView: View {
     private var pomodoroControls: some View {
         switch pomodoro.phase {
         case .idle:
-            Button("开始番茄 25:00") { pomodoro.start() }
+            Button(L10n.startPomodoro("25:00")) { pomodoro.start() }
                 .buttonStyle(.borderedProminent)
         case .focus, .rest:
             HStack(spacing: 8) {
-                Text(pomodoro.phase == .focus ? "专注 \(pomodoro.displayString)" : "休息 \(pomodoro.displayString)")
+                Text(pomodoro.phase == .focus ? L10n.focusTime(pomodoro.displayString) : L10n.restTime(pomodoro.displayString))
                     .font(.system(.callout, design: .monospaced).weight(.medium))
-                Button(pomodoro.isPaused ? "继续" : "暂停") { pomodoro.togglePause() }
+                Button(pomodoro.isPaused ? L10n.resumeTimer : L10n.pauseTimer) { pomodoro.togglePause() }
                     .buttonStyle(.bordered)
-                Button("重置") { pomodoro.reset() }
+                Button(L10n.resetTimer) { pomodoro.reset() }
                     .buttonStyle(.bordered)
             }
         }
@@ -289,10 +289,10 @@ struct NotchView: View {
     /// F7：未授权引导（文案从简，适配无刘海屏的窄卡片）
     private var permissionGuide: some View {
         HStack(spacing: 8) {
-            Text("需要「运动与健身」权限")
+            Text(L10n.permNeeded)
                 .font(.footnote)
                 .foregroundStyle(.orange)
-            Button("打开系统设置") {
+            Button(L10n.openSystemSettings) {
                 if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Motion") {
                     NSWorkspace.shared.open(url)
                 }

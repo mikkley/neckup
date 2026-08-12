@@ -8,13 +8,7 @@ public struct MountainState: Codable, Sendable, Equatable {
         case green = 1    // 青山
         case snowPeak = 2 // 雪峰
 
-        public var displayName: String {
-            switch self {
-            case .barren: "秃山"
-            case .green: "青山"
-            case .snowPeak: "雪峰"
-            }
-        }
+        public var displayName: String { L10n.mountainName(rawValue) }
     }
 
     // MARK: 成长常量（阈值收在这里，设计文档 §5.2）

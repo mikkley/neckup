@@ -15,6 +15,7 @@ final class AppSettings: ObservableObject {
         static let breakInterval = "breakIntervalMin"
         static let yawSign = "yawSign"
         static let rollSign = "rollSign"
+        static let language = "appLanguage"
     }
 
     @Published var thresholdDeg: Double { didSet { defaults.set(thresholdDeg, forKey: Keys.threshold) } }
@@ -35,6 +36,8 @@ final class AppSettings: ObservableObject {
     /// 传感器输出处统一应用，小人/游戏/提醒同一份修正
     @Published var yawSign: Double { didSet { defaults.set(yawSign, forKey: Keys.yawSign) } }
     @Published var rollSign: Double { didSet { defaults.set(rollSign, forKey: Keys.rollSign) } }
+    /// 界面语言："" = 跟随系统，否则 zh-Hans/en/ja/ko（L10n.resolved 读取同一键）
+    @Published var language: String { didSet { defaults.set(language, forKey: Keys.language) } }
 
     private let defaults = UserDefaults.standard
 
@@ -62,6 +65,7 @@ final class AppSettings: ObservableObject {
         breakIntervalMin = defaults.double(forKey: Keys.breakInterval)
         yawSign = defaults.double(forKey: Keys.yawSign)
         rollSign = defaults.double(forKey: Keys.rollSign)
+        language = defaults.string(forKey: Keys.language) ?? ""
     }
 
     /// 是否请求 mock 数据：`--mock` 启动参数 或 设置开关

@@ -2,6 +2,12 @@ import XCTest
 @testable import NeckUpCore
 
 final class QiTurtleGameTests: XCTestCase {
+    /// 文案断言与宿主机 locale 无关：钉住中文
+    override func setUp() {
+        super.setUp()
+        UserDefaults.standard.set("zh-Hans", forKey: "appLanguage")
+    }
+
     private let t0 = Date(timeIntervalSince1970: 1_000_000)
 
     /// 标准收下巴：0.52s 下探到 -5.5°（≈10.6°/s），0.52s 回收到零位，再保持 holdFrames 帧

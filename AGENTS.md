@@ -19,5 +19,7 @@ macOS 灵动岛应用：用 AirPods 运动传感器（CMHeadphoneMotionManager�
 
 ## 代码约定
 
-- Swift 6 严格并发；UI 文案中文，注释中文精炼
+- Swift 6 严格并发；注释中文精炼
+- UI 文案多语言（中/英/日/韩）：全部走 `L10n`（NeckUpCore/L10n.swift + NeckUp/L10n+UI.swift），
+  新增文案四语言写全；语言设置在 AppSettings.language（"" = 跟随系统），禁止再硬编码中文字符串
 - 设计稿在 `design/`（Open Design pacman 像素风）

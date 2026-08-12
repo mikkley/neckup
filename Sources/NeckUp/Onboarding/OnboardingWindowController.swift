@@ -1,4 +1,5 @@
 import AppKit
+import NeckUpCore
 import SwiftUI
 
 extension Notification.Name {
@@ -31,7 +32,7 @@ final class OnboardingWindowController {
                 styleMask: [.titled, .closable],
                 backing: .buffered, defer: false
             )
-            w.title = "欢迎使用 NeckUp"
+            w.title = L10n.welcomeTitle
             w.contentView = NSHostingView(rootView: root)
             w.center()
             w.isReleasedWhenClosed = false

@@ -197,7 +197,7 @@ final class PostureMonitor: ObservableObject {
             ignoredCount = 0
             degradedUntil = Date().addingTimeInterval(30 * 60)  // 30 分钟内岛不再提醒
             exitReminder()
-            Notifier.send(title: "NeckUp", body: "已经低头很久啦，抬头活动一下颈椎吧")
+            Notifier.send(title: "NeckUp", body: L10n.slouchLongBody)
         }
     }
 
@@ -210,19 +210,13 @@ final class PostureMonitor: ObservableObject {
     }
 }
 
-/// G7：温和提醒文案轮换池
+/// G7：温和提醒文案轮换池（文案表在 L10n.reminderPool）
 @MainActor
 enum ReminderPool {
-    private static let texts = [
-        "抬头一下 🐢",
-        "脖子说它想你了",
-        "山峰等你长高",
-        "头抬高一点，世界更大",
-        "伸个懒腰，看看远方",
-    ]
     private static var lastIndex = -1
 
     static func next() -> String {
+        let texts = L10n.reminderPool
         var i = Int.random(in: 0..<texts.count)
         if texts.count > 1, i == lastIndex { i = (i + 1) % texts.count }
         lastIndex = i

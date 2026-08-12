@@ -1,4 +1,5 @@
 import Foundation
+import NeckUpCore
 
 /// 25+5 番茄钟：开始/暂停/重置，结束发系统通知
 @MainActor
@@ -90,12 +91,12 @@ final class PomodoroTimer: ObservableObject {
         switch phase {
         case .focus:
             onFocusEnded?(focusStart ?? Date(), Date(), true)
-            Notifier.send(title: "番茄钟完成 🎉", body: "专注 \(focusMinutes) 分钟结束，休息 5 分钟吧")
+            Notifier.send(title: L10n.pomodoroDoneTitle, body: L10n.pomodoroDoneBody(focusMinutes))
             phase = .rest
             remainingSec = restSeconds
             onPhaseChange?(phase)
         case .rest:
-            Notifier.send(title: "休息结束", body: "可以开始下一个番茄钟了")
+            Notifier.send(title: L10n.breakOverTitle, body: L10n.breakOverBody)
             reset()
         case .idle:
             break

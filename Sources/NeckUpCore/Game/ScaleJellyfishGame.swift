@@ -132,7 +132,7 @@ public struct ScaleJellyfishGame: Sendable {
         } else if abs(roll) >= Self.holdAngle, speed > SafetyLimits.rejectSpeed {
             tooFastLatched = true
             events.append(.tooFast)
-            showMessage("慢一点 🐢", for: 2.5, at: now)
+            showMessage(L10n.tooFast, for: 2.5, at: now)
         }
 
         // 宝石在左（gemX<0）→ 左倾（roll>0）去接

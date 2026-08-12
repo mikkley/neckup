@@ -1,4 +1,5 @@
 import AppKit
+import NeckUpCore
 
 /// F8：菜单栏入口（灵动岛不可用时的兜底 + 设置入口）
 @MainActor
@@ -15,14 +16,14 @@ final class StatusBarController: NSObject {
         statusItem.button?.image = NSImage(systemSymbolName: "tortoise.fill", accessibilityDescription: "NeckUp")
         menu.delegate = self
 
-        addItem("展开灵动岛", action: #selector(toggleIsland))
-        addItem("暂停监测", action: #selector(toggleMonitoring))
-        addItem("开始番茄钟", action: #selector(togglePomodoro))
-        addItem("坐直校准", action: #selector(recalibrate))
-        addItem("静音音效", action: #selector(toggleMute))
+        addItem(L10n.menuExpand, action: #selector(toggleIsland))
+        addItem(L10n.pauseMonitoring, action: #selector(toggleMonitoring))
+        addItem(L10n.menuStartPomodoro, action: #selector(togglePomodoro))
+        addItem(L10n.recalibrate, action: #selector(recalibrate))
+        addItem(L10n.menuMute, action: #selector(toggleMute))
         menu.addItem(.separator())
-        addItem("设置…", action: #selector(openSettings))
-        addItem("退出 NeckUp", action: #selector(quit))
+        addItem(L10n.menuSettings, action: #selector(openSettings))
+        addItem(L10n.menuQuit, action: #selector(quit))
 
         statusItem.menu = menu
 
@@ -75,15 +76,18 @@ final class StatusBarController: NSObject {
 }
 
 extension StatusBarController: NSMenuDelegate {
-    /// 打开菜单时按当前状态刷新文案
+    /// 打开菜单时按当前状态刷新文案（同时拾取语言切换）
     func menuWillOpen(_ menu: NSMenu) {
         switch state.islandState {
-        case .expanded: menu.items[0].title = "收起灵动岛"
-        case .game: menu.items[0].title = "结束本局"   // 游戏态点击 = 收回本局
-        default: menu.items[0].title = "展开灵动岛"
+        case .expanded: menu.items[0].title = L10n.menuCollapse
+        case .game: menu.items[0].title = L10n.menuEndGame   // 游戏态点击 = 收回本局
+        default: menu.items[0].title = L10n.menuExpand
         }
-        menu.items[1].title = state.monitor.isMonitoring ? "暂停监测" : "继续监测"
-        menu.items[2].title = state.pomodoro.phase == .idle ? "开始番茄钟" : "停止番茄钟"
-        menu.items[4].title = state.settings.soundEnabled ? "静音音效" : "恢复音效"
+        menu.items[1].title = state.monitor.isMonitoring ? L10n.pauseMonitoring : L10n.resumeMonitoring
+        menu.items[2].title = state.pomodoro.phase == .idle ? L10n.menuStartPomodoro : L10n.menuStopPomodoro
+        menu.items[3].title = L10n.recalibrate
+        menu.items[4].title = state.settings.soundEnabled ? L10n.menuMute : L10n.menuUnmute
+        menu.items[6].title = L10n.menuSettings
+        menu.items[7].title = L10n.menuQuit
     }
 }

@@ -56,10 +56,10 @@ struct GameContainerView: View {
 
     private var topBar: some View {
         HStack {
-            Text("水滴 ×\(appState.gameViewState?.hud.droplets ?? 0)")
+            Text(L10n.droplets(appState.gameViewState?.hud.droplets ?? 0))
             Spacer()
             if let combo = appState.gameViewState?.hud.combo, combo >= 2 {
-                Text("连击 ×\(combo)")
+                Text(L10n.combo(combo))
                     .foregroundStyle(.yellow)
             }
             Spacer()
@@ -77,7 +77,8 @@ struct GameContainerView: View {
     private var bottomLine: some View {
         let hud = appState.gameViewState?.hud
         let text: String = if let result = hud?.result {
-            "\(result.monster.resultPrefix)！\(result.monster.resultVerb) \(result.reps) 次 · 最高连击 \(result.maxCombo) · 水滴 +\(result.droplets) 🎉"
+            L10n.gameResult(prefix: result.monster.resultPrefix, verb: result.monster.resultVerb,
+                            reps: result.reps, maxCombo: result.maxCombo, droplets: result.droplets)
         } else if let msg = hud?.message {
             msg
         } else {

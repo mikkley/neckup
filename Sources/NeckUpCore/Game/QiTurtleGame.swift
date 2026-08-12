@@ -126,7 +126,7 @@ public struct QiTurtleGame: Sendable {
             phase = .waitingTuck
             maxDip = 0
             events.append(.tooFast)
-            showMessage("慢一点 🐢", for: 2.5, at: now)
+            showMessage(L10n.tooFast, for: 2.5, at: now)
         } else if tuckPattern {
             switch phase {
             case .waitingTuck:
@@ -190,7 +190,7 @@ public struct QiTurtleGame: Sendable {
         charge = 0
         phase = .waitingTuck
         events.append(.qiBlast(combo: combo))
-        showMessage("气功波！僵硬云散开了 ☁️", for: 2.5, at: now)
+        showMessage(L10n.qiBlast, for: 2.5, at: now)
     }
 
     private mutating func advanceTime(to now: Date) -> [Event] {

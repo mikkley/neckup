@@ -2,6 +2,12 @@ import XCTest
 @testable import NeckUpCore
 
 final class ScaleJellyfishGameTests: XCTestCase {
+    /// 文案断言与宿主机 locale 无关：钉住中文
+    override func setUp() {
+        super.setUp()
+        UserDefaults.standard.set("zh-Hans", forKey: "appLanguage")
+    }
+
     private let t0 = Date(timeIntervalSince1970: 1_000_000)
 
     /// 缓慢右侧屈到 -27°（1s 斜坡 ≈27°/s；roll 左侧倾为正，右屈喂负值），随后持续保持 frames 帧

@@ -2,6 +2,12 @@ import XCTest
 @testable import NeckUpCore
 
 final class SlimeAxeGameTests: XCTestCase {
+    /// 文案断言与宿主机 locale 无关：钉住中文
+    override func setUp() {
+        super.setUp()
+        UserDefaults.standard.set("zh-Hans", forKey: "appLanguage")
+    }
+
     private let t0 = Date(timeIntervalSince1970: 1_000_000)
 
     /// 以 25°/s 缓慢点头到 -26° 再回正（一次标准劈砍往复，每帧 1°/40ms）
