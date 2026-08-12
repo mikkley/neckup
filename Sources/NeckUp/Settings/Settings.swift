@@ -13,6 +13,8 @@ final class AppSettings: ObservableObject {
         static let zen = "zenMode"
         static let display = "displayID"
         static let breakInterval = "breakIntervalMin"
+        static let yawSign = "yawSign"
+        static let rollSign = "rollSign"
     }
 
     @Published var thresholdDeg: Double { didSet { defaults.set(thresholdDeg, forKey: Keys.threshold) } }
@@ -29,6 +31,10 @@ final class AppSettings: ObservableObject {
     @Published var displayID: String { didSet { defaults.set(displayID, forKey: Keys.display) } }
     /// 定时活动提醒间隔（分钟，0 = 关闭；独立于番茄钟）
     @Published var breakIntervalMin: Double { didSet { defaults.set(breakIntervalMin, forKey: Keys.breakInterval) } }
+    /// 方向校准符号（±1）：不同 AirPods 型号轴向可能相反，「方向校准」实测写入；
+    /// 传感器输出处统一应用，小人/游戏/提醒同一份修正
+    @Published var yawSign: Double { didSet { defaults.set(yawSign, forKey: Keys.yawSign) } }
+    @Published var rollSign: Double { didSet { defaults.set(rollSign, forKey: Keys.rollSign) } }
 
     private let defaults = UserDefaults.standard
 
@@ -42,6 +48,8 @@ final class AppSettings: ObservableObject {
             Keys.game: true,
             Keys.zen: false,
             Keys.breakInterval: 0.0,
+            Keys.yawSign: 1.0,
+            Keys.rollSign: 1.0,
         ])
         thresholdDeg = defaults.double(forKey: Keys.threshold)
         sustainedSec = defaults.double(forKey: Keys.sustained)
@@ -52,6 +60,8 @@ final class AppSettings: ObservableObject {
         zenMode = defaults.bool(forKey: Keys.zen)
         displayID = defaults.string(forKey: Keys.display) ?? ""
         breakIntervalMin = defaults.double(forKey: Keys.breakInterval)
+        yawSign = defaults.double(forKey: Keys.yawSign)
+        rollSign = defaults.double(forKey: Keys.rollSign)
     }
 
     /// 是否请求 mock 数据：`--mock` 启动参数 或 设置开关

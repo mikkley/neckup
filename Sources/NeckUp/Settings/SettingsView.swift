@@ -7,6 +7,7 @@ struct SettingsView: View {
     @EnvironmentObject var settings: AppSettings
     @EnvironmentObject var monitor: PostureMonitor
     @EnvironmentObject var appState: AppState
+    @State private var showDirectionCal = false
 
     /// 灵敏度三档 ↔ 内部阈值角度的映射
     private var sensitivity: Binding<Int> {
@@ -91,6 +92,11 @@ struct SettingsView: View {
             }
             Section("传感器") {
                 Button("坐直后点此校准") { monitor.recalibrate() }
+                Button("方向校准…") { showDirectionCal = true }
+                    .disabled(!monitor.isWearing)
+                Text("转头/侧倾时小人或游戏方向反了？戴上 AirPods 做一次方向校准即可。")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
                 Toggle("使用模拟数据（无 AirPods 调试）", isOn: $settings.mockMode)
                 Text("模拟数据开关需重启 App 后生效；也可用 --mock 启动参数临时开启。")
                     .font(.caption)
@@ -98,6 +104,17 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .frame(width: 420, height: 620)
+        .frame(width: 420, height: 660)
+        .sheet(isPresented: $showDirectionCal, onDismiss: { appState.refreshSamplingRate() }) {
+            // sheet 期间传感器全速：方向校准需要实时跟随
+            DirectionCalibrationView(
+                onDone: { showDirectionCal = false },
+                onSkip: { showDirectionCal = false },
+                skipLabel: "取消"
+            )
+            .padding(20)
+            .frame(width: 380, height: 400)
+            .onAppear { monitor.setHighFrequency(true) }
+        }
     }
 }

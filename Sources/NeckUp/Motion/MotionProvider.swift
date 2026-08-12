@@ -144,7 +144,11 @@ final class HeadphoneMotionProvider: NSObject, MotionProvider, CMHeadphoneMotion
                                           rel.w, rel.x, rel.y, rel.z, g.x, g.y, g.z))
             }
             let e = Self.anatomicalDegrees(rel, up: ref.up, lateral: ref.lateral, forward: ref.forward)
-            self.onUpdate?(HeadPose(pitch: e.pitch, yaw: e.yaw, roll: e.roll))
+            // 方向校准符号（AppSettings yawSign/rollSign，已注册默认 1.0）：
+            // 不同 AirPods 型号轴向可能相反，「方向校准」实测写入；逐帧读取保证改完立即生效
+            let ys = UserDefaults.standard.object(forKey: "yawSign") as? Double ?? 1
+            let rs = UserDefaults.standard.object(forKey: "rollSign") as? Double ?? 1
+            self.onUpdate?(HeadPose(pitch: e.pitch, yaw: e.yaw * ys, roll: e.roll * rs))
         }
     }
 

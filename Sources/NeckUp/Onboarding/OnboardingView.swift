@@ -30,6 +30,7 @@ struct OnboardingView: View {
                 case 0: welcomePage
                 case 1: permissionPage
                 case 2: calibratePage
+                case 3: directionPage
                 default: gamePage
                 }
             }
@@ -156,7 +157,16 @@ struct OnboardingView: View {
         }
     }
 
-    // MARK: 第 4 步：游戏与提醒
+    // MARK: 第 4 步：方向校准（实测符号，自动适配不同 AirPods 轴向）
+
+    private var directionPage: some View {
+        DirectionCalibrationView(
+            onDone: { step = 4 },
+            onSkip: { step = 4 }
+        )
+    }
+
+    // MARK: 第 5 步：游戏与提醒
 
     private var gamePage: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -198,7 +208,7 @@ struct OnboardingView: View {
                 .disabled(step == 0)
             Spacer()
             HStack(spacing: 6) {
-                ForEach(0 ..< 4, id: \.self) { i in
+                ForEach(0 ..< 5, id: \.self) { i in
                     Capsule()
                         .fill(i == step ? Color.primary : Color.secondary.opacity(0.3))
                         .frame(width: i == step ? 16 : 6, height: 6)
@@ -209,11 +219,12 @@ struct OnboardingView: View {
                 Button("下一步") { step += 1 }
                     .buttonStyle(.borderedProminent)
                     .keyboardShortcut(.defaultAction)
-            } else {
+            } else if step > 3 {
                 Button("完成") { onFinish() }
                     .buttonStyle(.borderedProminent)
                     .keyboardShortcut(.defaultAction)
             }
+            // step == 3（方向校准）页内自带「完成 / 跳过」，底部不再放按钮
         }
         .controlSize(.large)
     }
