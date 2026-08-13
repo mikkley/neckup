@@ -1,10 +1,10 @@
-# NeckUp for Mac
+# TurtleUp for Mac
 
-> 脖子曲度变直这件事，自己是感觉不到的。NeckUp 让 AirPods 替你知道。
+> 脖子曲度变直这件事，自己是感觉不到的。TurtleUp 让 AirPods 替你知道。
 
 长时间伏案的打工人里，颈椎生理曲度变直（"军姿颈"）越来越常见——它不是某天突然低头低出来的，而是每天几小时、自己完全觉知不到的慢性前倾堆出来的。等到脖子酸痛时，曲度往往已经变了。
 
-NeckUp 是一个 macOS 灵动岛应用：用 AirPods 里的运动传感器实时感知头部前倾，在你**自己察觉不到的时候**轻轻提醒，并在休息时带你用 60 秒头控小游戏把脖子活动开。
+TurtleUp 是一个 macOS 灵动岛应用：用 AirPods 里的运动传感器实时感知头部前倾，在你**自己察觉不到的时候**轻轻提醒，并在休息时带你用 60 秒头控小游戏把脖子活动开。
 
 ![设计稿](design/preview.png)
 
@@ -29,14 +29,14 @@ NeckUp 是一个 macOS 灵动岛应用：用 AirPods 里的运动传感器实时
 **Homebrew（推荐）**
 
 ```bash
-brew install --cask mikkley/neckup/neckup
+brew install --cask mikkley/turtleup/turtleup
 ```
 
 **手动下载**
 
-从 [Releases](https://github.com/mikkley/neckup/releases) 下载 `NeckUp-macOS.zip`，解压后拖入「应用程序」。
+从 [Releases](https://github.com/mikkley/turtleup/releases) 下载 `TurtleUp-macOS.zip`，解压后拖入「应用程序」。
 
-> 首次打开如提示「无法验证开发者」（ad-hoc 签名、未公证的正常现象）：右键 App → 打开，或终端执行 `xattr -dr com.apple.quarantine /Applications/NeckUp.app`。首次运行需授予**「运动与健身」**权限（读取 AirPods 头部运动数据）。
+> 首次打开如提示「无法验证开发者」（ad-hoc 签名、未公证的正常现象）：右键 App → 打开，或终端执行 `xattr -dr com.apple.quarantine /Applications/TurtleUp.app`。首次运行需授予**「运动与健身」**权限（读取 AirPods 头部运动数据）。
 
 ## 从源码构建
 
@@ -44,12 +44,12 @@ brew install --cask mikkley/neckup/neckup
 # 编译验证 + 跑测试
 swift build && swift test
 
-# 打包 NeckUp.app（release 构建 + ad-hoc 签名）
+# 打包 TurtleUp.app（release 构建 + ad-hoc 签名）
 bash scripts/build-app.sh
-open NeckUp.app
+open TurtleUp.app
 
 # 无 AirPods 开发预览：模拟波形数据
-./NeckUp.app/Contents/MacOS/NeckUp --mock
+./TurtleUp.app/Contents/MacOS/TurtleUp --mock
 ```
 
 ## 系统要求
@@ -60,9 +60,9 @@ open NeckUp.app
 
 ## 技术说明
 
-- 纯 SwiftPM 工程，无 .xcodeproj：`NeckUp`（AppKit/SwiftUI UI 与传感器）+ `NeckUpCore`（纯游戏/统计逻辑，XCTest 覆盖）
+- 纯 SwiftPM 工程，无 .xcodeproj：`TurtleUp`（AppKit/SwiftUI UI 与传感器）+ `TurtleUpCore`（纯游戏/统计逻辑，XCTest 覆盖）
 - 功耗：非番茄钟时段传感器 0.5Hz 低频上报，专注/对局才恢复 25Hz
-- 隐私：所有数据只存在本机 `~/Library/Application Support/NeckUp/`
+- 隐私：所有数据只存在本机 `~/Library/Application Support/TurtleUp/`
 
 ## 已知限制
 
@@ -74,7 +74,7 @@ open NeckUp.app
 
 免费开源，欢迎 issue 和 PR。
 
-## 支持 NeckUp
+## 支持 TurtleUp
 
 如果它帮你抬起了头，可以请作者喝杯咖啡 ☕
 

@@ -1,17 +1,17 @@
 #!/bin/bash
-# 组装 NeckUp.app：release 构建 + Info.plist + ad-hoc 签名
+# 组装 TurtleUp.app：release 构建 + Info.plist + ad-hoc 签名
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
 swift build -c release
 
-APP="NeckUp.app"
+APP="TurtleUp.app"
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS"
-cp .build/release/NeckUp "$APP/Contents/MacOS/NeckUp"
+cp .build/release/TurtleUp "$APP/Contents/MacOS/TurtleUp"
 cp Resources/Info.plist "$APP/Contents/Info.plist"
 
-# 收款码等资源（设置页「支持 NeckUp」）
+# 收款码等资源（设置页「支持 TurtleUp」）
 mkdir -p "$APP/Contents/Resources"
 cp Resources/Donate/*.jpg "$APP/Contents/Resources/"
 

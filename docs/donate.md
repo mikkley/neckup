@@ -1,7 +1,7 @@
-# 支持 NeckUp / Support NeckUp
+# 支持 TurtleUp / Support TurtleUp
 
-NeckUp 是免费开源的。如果它帮你抬起了头，可以请作者喝杯咖啡 ☕
-NeckUp is free and open source. If it helped you lift your head, you can buy the author a coffee ☕
+TurtleUp 是免费开源的。如果它帮你抬起了头，可以请作者喝杯咖啡 ☕
+TurtleUp is free and open source. If it helped you lift your head, you can buy the author a coffee ☕
 
 ## ☕ Buy Me a Coffee（美元 / USD）
 
