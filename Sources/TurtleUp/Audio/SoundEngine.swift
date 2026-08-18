@@ -129,14 +129,22 @@ final class SoundEngine {
             engine.detach(node)
             return
         }
-        node.scheduleBuffer(buffer) { [weak self, weak node] in
+        let box = SendableNode(node)
+        node.scheduleBuffer(buffer) { [weak self] in
             Task { @MainActor in
-                guard let self, let node else { return }
+                guard let self, let node = box.node else { return }
                 self.engine.detach(node)
             }
         }
         node.play()
     }
+}
+
+/// AVAudioPlayerNode 的 @unchecked Sendable 薄封装：节点创建/摘除都在主线程，
+/// 仅用于把弱引用带进 scheduleBuffer 的 @Sendable 完成回调（Swift 6 严格并发）
+private struct SendableNode: @unchecked Sendable {
+    weak var node: AVAudioPlayerNode?
+    init(_ node: AVAudioPlayerNode) { self.node = node }
 }
 
 // MARK: - PCM 程序合成（纯函数，44.1kHz mono Float32）

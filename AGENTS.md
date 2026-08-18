@@ -6,7 +6,7 @@ macOS 灵动岛应用：用 AirPods 运动传感器（`CMHeadphoneMotionManager`
 低头提醒 + 25+5 番茄钟 + 坐姿统计 + 休息段头控微游戏（五只"僵硬怪"对应五个颈部舒展动作）
 + 成长系统（水滴浇山、五怪图鉴星级）。菜单栏常驻 accessory 应用（`LSUIElement`，不进 Dock）。
 
-- Bundle ID：`com.turtleup.mac`；当前版本 0.3.0（见 `Resources/Info.plist`，发版要同步改这里）
+- Bundle ID：`com.turtleup.mac`；当前版本 0.3.1（见 `Resources/Info.plist`，发版要同步改这里）
 - 硬件要求：AirPods Pro（1 代+）/ AirPods 3 / AirPods Max / Beats Fit Pro；
   首次运行需授予「运动与健身」权限（`NSMotionUsageDescription`）
 - 设计依据：`docs/gamification-design.md`（源码注释里的「设计文档 §x.x」都指它）；
@@ -41,12 +41,11 @@ swift run TurtleUp --mock   # 无 AirPods 开发预览：Mock 慢速点头模拟
 调试参数（`ProcessInfo.arguments` 判定）：`--mock` 模拟传感器、`--quick` 启动自动开番茄钟快进休息段、
 `--logpose` 传感器帧/动作标记写 `/tmp/turtleup-qlog.txt`。
 
-**环境注意**：本仓库在 Xcode 26.3（Swift 6.2.4 / macOS 26 SDK）下 `swift build` 目前编不过 TurtleUp target
-——`OperationQueue? has no member 'main'`、`no member 'qualityOfService'`、`NotificationCenter has no member 'default'`
-等错误（涉及 `TurtleUpApp.swift`、`MenuBar/StatusBarController.swift`、`Onboarding/OnboardingWindowController.swift`、
-`Notch/NotchPanel.swift`、`Motion/MotionProvider.swift`），疑似新版 SDK Foundation overlay 变化所致；
-`TurtleUpCore` target 单独可编译。
-改动前先确认自己环境的编译基线，不要把存量错误当成自己改出来的（反之亦然）。
+**环境注意**：曾在 Xcode 26.3（macOS 26 SDK）下遇到 `OperationQueue? has no member 'main'` 等诡报错，
+实为旧 `.build` 增量缓存与新 SDK 不兼容——`rm -rf .build` 全量重编即恢复。
+当前 Xcode 26.3 下 `swift build` / `swift test` 全部通过（仅剩的一例真实错误是
+`SoundEngine.swift` 的 Swift 6 严格并发 `sending risks data races`，已用 `@unchecked Sendable`
+弱引用封装修复）。遇到莫名 SDK 报错先清 `.build` 再排查。
 
 ## 运行时架构
 
