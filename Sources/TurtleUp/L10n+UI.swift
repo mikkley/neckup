@@ -479,6 +479,22 @@ extension L10n {
         case .ko: "뽀모도로 없이도 정시 활동: 시간이 되면 한 판 시작(게임 off 시 알림만). 뽀모도로 중에는 자동으로 양보."
         }
     }
+    public static var secGeneral: String {
+        switch resolved {
+        case .zhHans, .system: "通用"
+        case .en: "General"
+        case .ja: "一般"
+        case .ko: "일반"
+        }
+    }
+    public static var launchAtLogin: String {
+        switch resolved {
+        case .zhHans, .system: "开机自动启动"
+        case .en: "Launch at login"
+        case .ja: "ログイン時に起動"
+        case .ko: "로그인 시 자동 실행"
+        }
+    }
     public static var secIsland: String {
         switch resolved {
         case .zhHans, .system: "灵动岛"

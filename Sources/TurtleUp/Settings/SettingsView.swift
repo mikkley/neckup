@@ -8,6 +8,7 @@ struct SettingsView: View {
     @EnvironmentObject var monitor: PostureMonitor
     @EnvironmentObject var appState: AppState
     @State private var showDirectionCal = false
+    @State private var launchAtLoginOn = false
 
     /// 灵敏度三档 ↔ 内部阈值角度的映射
     private var sensitivity: Binding<Int> {
@@ -27,6 +28,14 @@ struct SettingsView: View {
                     Text("日本語").tag("ja")
                     Text("한국어").tag("ko")
                 }
+            }
+            Section(L10n.secGeneral) {
+                // 状态以系统登录项为准（用户可在系统设置里直接改），开关后回读真实状态
+                Toggle(L10n.launchAtLogin, isOn: Binding(
+                    get: { launchAtLoginOn },
+                    set: { LaunchAtLogin.setEnabled($0); launchAtLoginOn = LaunchAtLogin.isEnabled }
+                ))
+                .onAppear { launchAtLoginOn = LaunchAtLogin.isEnabled }
             }
             Section(L10n.secPosture) {
                 Picker(L10n.sensitivityLabel, selection: sensitivity) {
